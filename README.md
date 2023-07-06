@@ -1,6 +1,18 @@
-# VO2max
-Code and build files for Rabbitcreek's VO2Max Spirometer. _Incorporating CO2 enhancements from Ulrich Rissel._
-Build instructions on [Instructable](https://www.instructables.com/Accurate-VO2-Max-for-Zwift-and-Strava/)
+# VO2 Max Mask 
+Super cool project to build your own VO2 Max mask.  Original build instructions can be found on [Instructable](https://www.instructables.com/Accurate-VO2-Max-for-Zwift-and-Strava/) I found the original build instructions comprehensive but fairly dense and disjointed.  This fork of Ivor's excellent Github work incorporates the CO2 enhancements from Ulrich Rissel.  The intent with this repo is to make it even cleaner and easier for someone to follow clear instructions that walk them through everything from purchasing parts to building the device.  Good luck, and enjoy!
+
+## Parts List
+| Item | Description/Details | Source | Est Cost |
+| --- | --- | --- | --- |
+| board (the brain) | ESP8266, alternative to the listed CP2104 | [Amazon](https://www.amazon.com/HiLetgo-Display-Bluetooth-Internet-Development/dp/B07X1W16QS/) | $18.99 |
+| battery| Lipo Battery, 1000 Mah, E503450 3.7v |  [Amazon](https://www.amazon.com/gp/product/B07BTV3W87/ref=ox_sc_act_title_1?smid=A132D7PL1YID8X&psc=1) | $11.99 |
+| item | model or description |  Source linked | Est Cost |
+| item | model or description |  Source linked | Est Cost |
+| item | model or description |  Source linked | Est Cost |
+| item | model or description |  Source linked | Est Cost |
+| item | model or description |  Source linked | Est Cost |
+| item | model or description |  Source linked | Est Cost |
+| tubing | 1/4" inside diameter (ID) |  Not found yet | Est Cost |
 
 Source code for Arduino under "VO2Max" - Arduino board settings to use for TTGO T-Display:
 
