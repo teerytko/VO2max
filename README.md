@@ -20,8 +20,8 @@ This fork of [Ivor's excellent Github work](https://github.com/ihewitt/VO2max) i
 | CO2 sensor | SCD30 |  [Digikey](https://www.digikey.com/en/products/detail/sensirion-ag/SCD30/8445334) | $62 |
 | on/off switch | mini push button |  [eBay](https://www.ebay.com/itm/225323324337?hash=item34765113b1:g:EDcAAOSwj5Vjrh1r)| $7 |
 | tubing | 4mm inside diameter (ID) |  Not found yet | Est cost |
-| screws | 2 x 3mm | Not found yet | Est cost |
-| threaded inserts | for 3 mm screws | Not found yet | Est cost |
+| screws | 2 x M3 x 8mm | [Amazon](https://www.amazon.com/Hilitchi-510-Pcs-Button-Socket-Assortment/dp/B073SWNV5N/) | $15 for kit |
+| threaded inserts | M3 x 8 x 5mm | [Amazon](https://www.amazon.com/gp/product/B096MD67WB/) | $18 for kit |
 
 Source code for Arduino under "VO2Max" - Arduino board settings to use for TTGO T-Display:
 
