@@ -13,6 +13,8 @@ This fork of [Ivor's excellent Github work](https://github.com/ihewitt/VO2max) i
 | board (the brain) | ESP8266, alternative to the listed CP2104 | [Amazon](https://www.amazon.com/HiLetgo-Display-Bluetooth-Internet-Development/dp/B07X1W16QS/) | $19 |
 | battery| Lipo Battery, 1000 Mah, E503450 3.7v |  [Amazon](https://www.amazon.com/gp/product/B07BTV3W87/ref=ox_sc_act_title_1?smid=A132D7PL1YID8X&psc=1) | $12 |
 | pressure sensor | BMP280, calculate air density |  [Amazon](https://www.amazon.com/gp/product/B01ICN5QPU/ref=ox_sc_act_title_1?smid=A30QSGOJR8LMXA&psc=1) | $6 |
+| screws | 2 x M3 x 8mm | [Amazon](https://www.amazon.com/Hilitchi-510-Pcs-Button-Socket-Assortment/dp/B073SWNV5N/) | $15 for kit |
+| threaded inserts | M3 x 8 x 5mm | [Amazon](https://www.amazon.com/gp/product/B096MD67WB/) | $18 for kit |
 | oxygen sensor | Gravity: I2C Oxygen Sensor |  [DF Robot](https://www.dfrobot.com/product-2052.html) | $75 |
 | differential pressure sensor | Omron--D6F-PH0025AD2 |  [Digikey](https://www.digikey.com/en/products/detail/omron-electronics-inc-emc-div/d6f-ph0025amd2/15197363) | $28 |
 | cable for diff press sensor | DF-CABLE3 |  [Digikey](https://www.digikey.com/en/products/detail/omron-electronics-inc-emc-div/D6F-CABLE3/9471785) | $12 |
@@ -20,8 +22,6 @@ This fork of [Ivor's excellent Github work](https://github.com/ihewitt/VO2max) i
 | CO2 sensor | SCD30 |  [Digikey](https://www.digikey.com/en/products/detail/sensirion-ag/SCD30/8445334) | $62 |
 | on/off switch | mini push button |  [eBay](https://www.ebay.com/itm/225323324337?hash=item34765113b1:g:EDcAAOSwj5Vjrh1r)| $7 |
 | tubing | 4mm inside diameter (ID) |  Not found yet | Est cost |
-| screws | 2 x M3 x 8mm | [Amazon](https://www.amazon.com/Hilitchi-510-Pcs-Button-Socket-Assortment/dp/B073SWNV5N/) | $15 for kit |
-| threaded inserts | M3 x 8 x 5mm | [Amazon](https://www.amazon.com/gp/product/B096MD67WB/) | $18 for kit |
 
 Source code for Arduino under "VO2Max" - Arduino board settings to use for TTGO T-Display:
 
