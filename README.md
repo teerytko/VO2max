@@ -26,12 +26,10 @@ This fork of [Ivor's excellent Github work](https://github.com/ihewitt/VO2max) i
 ## Instructions
 Print out the 3D parts using PLA.  I used ASA because that's what I had and I was eager to get started.  *Do not* use supports on anything except the "computer housing".
 Test fit all parts and make sure you know where everything goes.
-Use superglue to secure the button housing to the case, make sure the button is inside first.
-
+I painted my button housings black for contrast.  Use superglue to secure the button housing to the case, make sure the button is inside first.
 <figure>
     <img src="/images/button_housing.jpg" width="640" height="327"
          alt="Button Housing">
-    <figcaption>Here's how to set up the buttons.  I painted my housing black.</figcaption>
 </figure><br><br>
  
 ## Arduino (from Ivor)
