@@ -17,7 +17,11 @@ This fork of [Ivor's excellent Github work](https://github.com/ihewitt/VO2max) i
 | mask | half mask, particulate matter, 6200/07025 | [Digikey](https://www.digikey.com/en/products/detail/3m/6200-07025/7693860) | $22 |
 | CO2 sensor | SCD30 |  [Digikey](https://www.digikey.com/en/products/detail/sensirion-ag/SCD30/8445334) | $62 |
 | on/off switch | mini push button |  [eBay](https://www.ebay.com/itm/225323324337?hash=item34765113b1:g:EDcAAOSwj5Vjrh1r)| $7 |
-| tubing | 1/4" inside diameter (ID) |  Not found yet | Est Cost |
+| tubing | 4mm inside diameter (ID) |  Not found yet | Est cost |
+| screws | 2 x 3mm | Not found yet | Est cost |
+| threaded inserts | for 3 mm screws | Not found yet | Est cost |
+
+The App is designed for collecting data from a CO2 sensor so you have to spoof it by sending the Volume Minute of O2 to the CO2 level screen, the VO2 max to the Temp screen and the O2 level to the Humidity screen. 
 
 Source code for Arduino under "VO2Max" - Arduino board settings to use for TTGO T-Display:
 
@@ -58,7 +62,36 @@ Source code for Arduino under "VO2Max" - Arduino board settings to use for TTGO 
 
 3D printing files are within the `design` folder, Ulrich Rissel's design files to use a larger venturi diameter with CO2 sensor holder in `design/CO2_upgrade`
 
-Additional changes in this version:
+## Usage
+* Enable bluetooth on your phone
+* Go to "Record" function at bottom of screen on unit, and press it
+* Look for the Heart icon at the bottom, and push that to bring up the bluetooth pairing screen to find the unit
+
+## Usage - App
+* Turn on device
+* Add your weight (kg or lbs?)
+* Push the Go button
+* Turn on the Sensirion App, which will automatically pair and start recording data
+* 
+Programing is done through the USB-C connector. 
+Charging the battery is accomplished by turning on the unit and then plugging it in.
+
+
+
+## Additional changes in this version:
 - Menu system enhanced with adjustable calibration and setup options.
 - Additional GoldenCheetah integration (with VO2 master output)
 - CO2 sensor support (Ulrich's mods)
+
+## Running the unit with Zwift or Strava
+Use FinalZwiftConnect with files
+* DFRobot_OxygenSensor.cpp
+* DFRobot_OxygenSensor.h
+
+## Running the unit on the [Sensirion MyAmbience app](https://apps.apple.com/us/app/sensirion-myambience/id1529131572) (iOS)
+* FinalSensirionScreen
+* DFRobot_OxygenSensor.cpp
+* DFRobot_OxygenSensor.h
+* Sensirion_GadgetBle_Lib.cpp
+* Sensirion_GadgetBle_Lib.h
+
