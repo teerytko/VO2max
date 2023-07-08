@@ -23,8 +23,6 @@ This fork of [Ivor's excellent Github work](https://github.com/ihewitt/VO2max) i
 | screws | 2 x 3mm | Not found yet | Est cost |
 | threaded inserts | for 3 mm screws | Not found yet | Est cost |
 
-The App is designed for collecting data from a CO2 sensor so you have to spoof it by sending the Volume Minute of O2 to the CO2 level screen, the VO2 max to the Temp screen and the O2 level to the Humidity screen. 
-
 Source code for Arduino under "VO2Max" - Arduino board settings to use for TTGO T-Display:
 
     Board: ESP32 Dev Module
@@ -64,7 +62,7 @@ Source code for Arduino under "VO2Max" - Arduino board settings to use for TTGO 
 
 3D printing files are within the `design` folder, Ulrich Rissel's design files to use a larger venturi diameter with CO2 sensor holder in `design/CO2_upgrade`
 
-## Usage
+## Usage - Zwift & Strava
 * Enable bluetooth on your phone
 * Go to "Record" function at bottom of screen on unit, and press it
 * Look for the Heart icon at the bottom, and push that to bring up the bluetooth pairing screen to find the unit
@@ -74,10 +72,11 @@ Source code for Arduino under "VO2Max" - Arduino board settings to use for TTGO 
 * Add your weight (kg or lbs?)
 * Push the Go button
 * Turn on the Sensirion App, which will automatically pair and start recording data
-* 
+
 Programing is done through the USB-C connector. 
 Charging the battery is accomplished by turning on the unit and then plugging it in.
 
+The App is designed for collecting data from a CO2 sensor so you have to spoof it by sending the Volume Minute of O2 to the CO2 level screen, the VO2 max to the Temp screen and the O2 level to the Humidity screen. 
 
 
 ## Additional changes in this version:
