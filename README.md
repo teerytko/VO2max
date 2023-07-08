@@ -15,13 +15,13 @@ This fork of [Ivor's excellent Github work](https://github.com/ihewitt/VO2max) i
 | pressure sensor | BMP280, calculate air density |  [Amazon](https://www.amazon.com/gp/product/B01ICN5QPU/ref=ox_sc_act_title_1?smid=A30QSGOJR8LMXA&psc=1) | $6 |
 | screws | 2 x M3 x 8mm | [Amazon](https://www.amazon.com/Hilitchi-510-Pcs-Button-Socket-Assortment/dp/B073SWNV5N/) | $15 for kit |
 | threaded inserts | M3 x 8 x 5mm | [Amazon](https://www.amazon.com/gp/product/B096MD67WB/) | $18 for kit |
+| aquarium tubing | standard 3/16", 4mm inside diameter (ID) |  [Amazon](https://www.amazon.com/AQUANEAT-Standard-Airline-Aquarium-PREMIUM/dp/B01N8SNNOI/) | $6 |
 | oxygen sensor | Gravity: I2C Oxygen Sensor |  [DF Robot](https://www.dfrobot.com/product-2052.html) | $75 |
 | differential pressure sensor | Omron--D6F-PH0025AD2 |  [Digikey](https://www.digikey.com/en/products/detail/omron-electronics-inc-emc-div/d6f-ph0025amd2/15197363) | $28 |
 | cable for diff press sensor | DF-CABLE3 |  [Digikey](https://www.digikey.com/en/products/detail/omron-electronics-inc-emc-div/D6F-CABLE3/9471785) | $12 |
 | mask | half mask, particulate matter, 6200/07025 | [Digikey](https://www.digikey.com/en/products/detail/3m/6200-07025/7693860) | $22 |
 | CO2 sensor | SCD30 |  [Digikey](https://www.digikey.com/en/products/detail/sensirion-ag/SCD30/8445334) | $62 |
 | on/off switch | mini push button |  [Adafruit]([https://www.ebay.com/itm/225323324337?hash=item34765113b1:g:EDcAAOSwj5Vjrh1r](https://www.adafruit.com/product/1683))| $6 |
-| tubing | 4mm inside diameter (ID) |  Not found yet | Est cost |
 
 Source code for Arduino under "VO2Max" - Arduino board settings to use for TTGO T-Display:
 
