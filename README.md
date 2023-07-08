@@ -28,8 +28,8 @@ Print out the 3D parts using PLA.  I used ASA because that's what I had and I wa
 Test fit all parts and make sure you know where everything goes.
 Use superglue to secure the button housing to the case, make sure the button is inside first.
 <figure>
-    <img src="/images/button_housing.jpg" width="640" height="480"
-         alt="Build parts">
+    <img src="/images/button housing.jpg" width="640" height="480"
+         alt="Button Housing">
     <figcaption>Source parts, top to bottom. 3M mask with front plate removed, 3D printed case, Oxygen sensor, TTGo T-Display, Flow sensor.</figcaption>
 </figure><br><br>
  
