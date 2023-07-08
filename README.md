@@ -23,6 +23,11 @@ This fork of [Ivor's excellent Github work](https://github.com/ihewitt/VO2max) i
 | CO2 sensor | SCD30 |  [Digikey](https://www.digikey.com/en/products/detail/sensirion-ag/SCD30/8445334) | $62 |
 | on/off switch | mini push button |  [Adafruit](https://www.adafruit.com/product/1683)| $6 |
 
+## Instructions
+Print out the 3D parts using PLA.  I used ASA because that's what I had and I was eager to get started.  *Do not* use supports on anything except the "computer housing".
+
+Test fit all parts and make sure you know where everything goes.  
+## Arduino (from Ivor)
 Source code for Arduino under "VO2Max" - Arduino board settings to use for TTGO T-Display:
 
     Board: ESP32 Dev Module
