@@ -1,11 +1,15 @@
 # VO2 Max Mask 
 Super cool project to build your own VO2 Max mask.  Your "VO2 Max" is a measure of how much oxygen your body and absorb and use during exercise, read more about it [here](https://www.healthline.com/health/vo2-max#benefits).
 
-Original build instructions can be found on [Instructable](https://www.instructables.com/Accurate-VO2-Max-for-Zwift-and-Strava/). 
+Original idea and detailed build instructions can be found on [Instructable](https://www.instructables.com/Accurate-VO2-Max-for-Zwift-and-Strava/). 
 
-I found the original build instructions comprehensive but fairly dense and disjointed.  This is a work in progress to clean it up and make it it a little easier to follow.
+I found the original build instructions comprehensive but fairly dense and disjointed, especially regarding the upgrades by urissel and ivor.
+
+This is a work in progress to clean it up and make it it a little easier to follow.
 
 This fork of [Ivor's excellent Github work](https://github.com/ihewitt/VO2max) incorporates the CO2 enhancements from Ulrich Rissel.  The intent with this repo is to make it even cleaner and easier for someone to follow clear instructions that walk them through everything from purchasing parts to building the device.  Good luck, and enjoy!
+
+Currently (July 8th 2023) a work in progress.  
 
 ## Parts List
 | Item | Description/Details | Source | Est Cost |
@@ -23,9 +27,13 @@ This fork of [Ivor's excellent Github work](https://github.com/ihewitt/VO2max) i
 | CO2 sensor | SCD30 |  [Digikey](https://www.digikey.com/en/products/detail/sensirion-ag/SCD30/8445334) | $62 |
 | on/off switch | mini push button |  [Adafruit](https://www.adafruit.com/product/1683)| $6 |
 
-## Instructions
+## Print 3D Parts
 Print out the 3D parts using PLA.  I used ASA because that's what I had and I was eager to get started.  *Do not* use supports on anything except the "computer housing".
-Test fit all parts and make sure you know where everything goes.
+<br>Test fit all parts and make sure you know where everything goes; that will make the next steps much easier.
+
+## Wire It Up
+
+## Assembly
 I painted my button housings black for contrast.  Use superglue to secure the button housing to the case, make sure the button is inside first.
 <figure>
     <img src="/images/button_housing.jpg" width="640" height="327"
