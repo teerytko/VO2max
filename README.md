@@ -21,7 +21,7 @@ This fork of [Ivor's excellent Github work](https://github.com/ihewitt/VO2max) i
 | cable for diff press sensor | DF-CABLE3 |  [Digikey](https://www.digikey.com/en/products/detail/omron-electronics-inc-emc-div/D6F-CABLE3/9471785) | $12 |
 | mask | half mask, particulate matter, 6200/07025 | [Digikey](https://www.digikey.com/en/products/detail/3m/6200-07025/7693860) | $22 |
 | CO2 sensor | SCD30 |  [Digikey](https://www.digikey.com/en/products/detail/sensirion-ag/SCD30/8445334) | $62 |
-| on/off switch | mini push button |  [Adafruit]([https://www.ebay.com/itm/225323324337?hash=item34765113b1:g:EDcAAOSwj5Vjrh1r](https://www.adafruit.com/product/1683))| $6 |
+| on/off switch | mini push button |  [Adafruit]((https://www.adafruit.com/product/1683))| $6 |
 
 Source code for Arduino under "VO2Max" - Arduino board settings to use for TTGO T-Display:
 
