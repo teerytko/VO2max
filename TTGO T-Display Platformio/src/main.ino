@@ -24,7 +24,6 @@ PSRAM: Disabled*/
 
 const String Version = "V2.2 2023/01/23";
 #include <Arduino.h>
-#include <Button2.h>
 #include "esp_adc_cal.h" // ADC calibration data
 #include <EEPROM.h>      // include library to read and write settings from flash
 #define ADC_EN  14       // ADC_EN is the ADC detection enable port
