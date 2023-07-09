@@ -28,7 +28,10 @@ Currently (July 8th 2023) a work in progress.
 | on/off switch | mini push button |  [Adafruit](https://www.adafruit.com/product/1683)| $6 |
 
 ## Print 3D Parts
-Print out the 3D parts using PLA.  I used ASA because that's what I had and I was eager to get started.  *Do not* use supports on anything except the "computer housing".
+Print out the 3D parts using PLA.  I used ASA because that's what I had and I was eager to get started. I've printed both the 20mm and the 16mm Venturi tubes.  I found the 20mm had a problem with the threads being super thin and breaking off.  For now (July 9th, 2023) I recommend against the 20mm.
+
+*Do not* use supports on anything except the "computer housing".
+
 <br>Test fit all parts and make sure you know where everything goes; that will make the next steps much easier.
 
 ## Wire It Up
