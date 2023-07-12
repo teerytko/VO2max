@@ -14,7 +14,7 @@ Currently (July 8th 2023) a work in progress.
 ## Parts List
 | Item | Description/Details | Source | Est Cost |
 | --- | --- | --- | --- |
-| board (the brain) | ESP32 T-Display, alternative to the listed CP2104 | [Amazon](https://www.amazon.com/gp/product/B099MPFJ9M/) | $19 |
+| board (the brain) | ESP32 T-Display, 16MB CH9102F | [Amazon](https://www.amazon.com/gp/product/B099MPFJ9M/) | $19 |
 | battery| Lipo Battery, 1000 Mah, E503450 3.7v |  [Amazon](https://www.amazon.com/gp/product/B07BTV3W87/ref=ox_sc_act_title_1?smid=A132D7PL1YID8X&psc=1) | $12 |
 | pressure sensor | BMP280, calculate air density |  [Amazon](https://www.amazon.com/gp/product/B01ICN5QPU/ref=ox_sc_act_title_1?smid=A30QSGOJR8LMXA&psc=1) | $6 |
 | screws | 2 x M3 x 8mm | [Amazon](https://www.amazon.com/Hilitchi-510-Pcs-Button-Socket-Assortment/dp/B073SWNV5N/) | $15 for kit |
@@ -33,6 +33,9 @@ Print out the 3D parts using PLA.  I used ASA because that's what I had and I wa
 *Do not* use supports on anything except the "computer housing".
 
 <br>Test fit all parts and make sure you know where everything goes; that will make the next steps much easier.
+
+## Program Board
+When you first get the board, hold down the boot button while plugging it in, and keep that down.  You need to erase everything on the board before you load the rest.  From there, you should be alb to use the Platformio folder to load everything you'll need.  I did this on a Windows computer (a little Beelink with a monitor & display) because I couldn't get it to work on my Mac.
 
 ## Wire It Up
 
