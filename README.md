@@ -5,11 +5,9 @@ Original idea and detailed build instructions can be found on [Instructable](htt
 
 I found the original build instructions comprehensive but fairly dense and disjointed, especially regarding the upgrades by urissel and ivor.
 
-This is a work in progress to clean it up and make it it a little easier to follow.
-
 This fork of [Ivor's excellent Github work](https://github.com/ihewitt/VO2max) incorporates the CO2 enhancements from Ulrich Rissel.  The intent with this repo is to make it even cleaner and easier for someone to follow clear instructions that walk them through everything from purchasing parts to building the device.  Good luck, and enjoy!
 
-Currently (July 8th 2023) a work in progress.  
+ Currently (July 13th 2023) a work in progress.  Should have updated 3d print files soon.
 
 ## Parts List
 | Item | Description/Details | Source | Est Cost |
