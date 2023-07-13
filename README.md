@@ -56,6 +56,13 @@ Source code for Arduino under "VO2Max" - Arduino board settings to use for TTGO 
     Partition Scheme: Default 4MB with spiffs (1.2MB APP/1.5 SPIFFS)
     Core Debug Level: None`
 
+## Useful Images
+<figure>
+    <img src="/images/sensor_measurements.jpg" width="3024" height="4032"
+         alt="Sensor Measurements">
+    <figcaption>Measurements for the sensors.</figcaption>
+</figure><br><br>
+
 <figure>
     <img src="/images/parts.jpg" width="640" height="480"
          alt="Build parts">
