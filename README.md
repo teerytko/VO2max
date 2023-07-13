@@ -58,7 +58,7 @@ Source code for Arduino under "VO2Max" - Arduino board settings to use for TTGO 
 
 ## Useful Images
 <figure>
-    <img src="/images/sensor_measurements.jpg" width="480" height="640"
+    <img src="/images/sensor_measurements.JPG" width="480" height="640"
          alt="Sensor Measurements">
     <figcaption>Measurements for the sensors.</figcaption>
 </figure><br><br>
