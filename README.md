@@ -5,9 +5,11 @@ Original idea and detailed build instructions can be found on [Instructable](htt
 
 I found the original build instructions comprehensive but fairly dense and disjointed, especially regarding the upgrades by urissel and ivor.
 
-This fork of [Ivor's excellent Github work](https://github.com/ihewitt/VO2max) incorporates the CO2 enhancements from Ulrich Rissel.  The intent with this repo is to make it even cleaner and easier for someone to follow clear instructions that walk them through everything from purchasing parts to building the device.  Good luck, and enjoy!
+I also thought there's a chance I can put my shoulder to the wheel here and rally a few experts to really improve some aspects of this; keep track of that over in the Wiki (up top for those you not used to Github).
 
- Currently (July 13th 2023) a work in progress.  Should have updated 3d print files soon.
+This fork of [Ivor's excellent Github work](https://github.com/ihewitt/VO2max) incorporates the CO2 enhancements from Ulrich Rissel.  The intent with this repo is to make it as easy as possible to build a world class piece of kit that'll add useful metrics to your training.
+
+ Currently (July 23th 2023) a work in progress.  Refer to the Wiki for exactly where we are now.
 
 ## Parts List
 | Item | Description/Details | Source | Est Cost |
