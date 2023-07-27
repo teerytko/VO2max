@@ -3,7 +3,7 @@ Super cool project to build your own VO2 Max mask.  Your "VO2 Max" is a measure 
 
 Original idea and detailed build instructions can be found on [Instructable](https://www.instructables.com/Accurate-VO2-Max-for-Zwift-and-Strava/). 
 
-I found the original build instructions comprehensive but fairly dense and disjointed, especially regarding the upgrades by urissel and ivor.
+I found the original build instructions comprehensive but fairly dense and disjointed, especially regarding the upgrades by urissel and ivor.  They were rad, but I was constantly scrolling and refreshing pages to find the next step.
 
 I also thought there's a chance I can put my shoulder to the wheel here and rally a few experts to really improve some aspects of this; keep track of that over in the Wiki (up top for those you not used to Github).
 
