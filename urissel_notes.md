@@ -45,7 +45,7 @@ VO2 is defined under STPD conditions. STPD stands for standard temperature (0°C
 
 According to my research, the conversion is nothing more than the ratio of the density of BTPS (actually measured pressure, 37°C, 95% humidity) to STPD. 
 
-* The two symbols BTPS and STPD represent two conventional conditions used when discussing respiratory gases. BTPS stands for body temperature (37°C), ambient pressure and gas saturated with water vapor, whereas STPD stands for standard temperature (0°C or 273 K) and pressure (760 mm Hg) and dry (no water vapor). Pulmonary ventilation (1/min) is usually measured at BTPS, whereas gas volumes in blood are usually expressed at STPD. To convert a gas volume at BTPS to one at STPD, one needs to multiply the former volume by (273/310) (PB − 47) / 760. * (National Library of Medicine reference)[https://www.ncbi.nlm.nih.gov/books/NBK54114/] *
+*The two symbols BTPS and STPD represent two conventional conditions used when discussing respiratory gases. BTPS stands for body temperature (37°C), ambient pressure and gas saturated with water vapor, whereas STPD stands for standard temperature (0°C or 273 K) and pressure (760 mm Hg) and dry (no water vapor). Pulmonary ventilation (1/min) is usually measured at BTPS, whereas gas volumes in blood are usually expressed at STPD. To convert a gas volume at BTPS to one at STPD, one needs to multiply the former volume by (273/310) (PB − 47) / 760. * (National Library of Medicine reference)[https://www.ncbi.nlm.nih.gov/books/NBK54114/]*
 
 The density of STPD is constant = 1.2922 kg/m³. The density of BTPS can be easily calculated, whereby instead of the gas constant 287.058, the constant for moist air is used for BTPS (about 292.8). 
 
