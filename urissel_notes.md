@@ -49,7 +49,7 @@ According to my research, the conversion is nothing more than the ratio of the d
 
 The density of STPD is constant = 1.2922 kg/m³. The density of BTPS can be easily calculated, whereby instead of the gas constant 287.058, the constant for moist air is used for BTPS (about 292.8). 
 
-The constant fluctuates in our temperature range depending on pressure only by a few percent, the density only in the per mille range, if 292.8 is not adjusted. The density indicates how many molecules are in the air. And now it becomes relatively simple: We measure Ve directly, so no further conversion is required. 
+The constant fluctuates in our temperature range depending on pressure only by a few percent, the density only in the per mille range, if 292.8 is not adjusted. The density indicates how many molecules are in the air.  And now it becomes relatively simple: We measure Ve directly, so no further conversion is required. 
 
 This results in: VO2 = Ve * O2diff% * Density BTPS / 1.2922. Done! By the way, according to the spirometry instructions, VO2 is only calculated from the O2 difference. 
 
