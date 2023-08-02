@@ -1,4 +1,4 @@
-*I found the notes from Ulli Rissel in Rabbitcreek's updates hard to read as one giant paragraph, so I've broken them down a bit here.*
+*I found the notes from Ulli Rissel in Rabbitcreek's updates hard to read as one giant paragraph, so I've broken them down a bit here, cut some parts out that related to the original venture tube design, and added in a few of Ulli's notes.*
 
 ## Upgrades from original:
 
@@ -52,5 +52,16 @@ The density of STPD is constant = 1.2922 kg/m³. The density of BTPS can be easi
 The constant fluctuates in our temperature range depending on pressure only by a few percent, the density only in the per mille range, if 292.8 is not adjusted. The density indicates how many molecules are in the air.  And now it becomes relatively simple: We measure Ve directly, so no further conversion is required. 
 
 This results in: VO2 = Ve * O2diff% * Density BTPS / 1.2922. Done! By the way, according to the spirometry instructions, VO2 is only calculated from the O2 difference. 
+
+The density must be related to the density under standard conditions. This means that rho must be divided by 1,225. All values are then about 20% lower:
+
+co2 = initialO2 - lastO2; //calculated level of CO2 based on Oxygen level loss
+if (co2 < 0) co2 = 0; // correction for sensor drift
+vo2Total = volumeVEmean * (rho/1.225) * co2 * 10; // = vo2 in ml/min (* co2% * 10 for L in ml)
+vo2Max = vo2Total / weightkg; //correction for wt
+
+VO2Total and vo2Max in ml/min/kg
+volumeVEmean: breath volume in L/min. (running mean)
+rho: density of the air in kg/m³
 
 CO2 is only used to calculate the quotient and for the Haldane formula, which we do not need.
