@@ -20,7 +20,7 @@ This fork of [Ivor's excellent Github work](https://github.com/ihewitt/VO2max) i
 | screws | 2 x M3 x 8mm | [Amazon](https://www.amazon.com/Hilitchi-510-Pcs-Button-Socket-Assortment/dp/B073SWNV5N/) | $15 for kit |
 | threaded inserts | M3 x 8 x 5mm | [Amazon](https://www.amazon.com/gp/product/B096MD67WB/) | $18 for kit |
 | aquarium tubing | standard 3/16", 4mm inside diameter (ID) |  [Amazon](https://www.amazon.com/AQUANEAT-Standard-Airline-Aquarium-PREMIUM/dp/B01N8SNNOI/) | $6 |
-| o-ring | for oxygen sensor, 22x19x1.5mm | [Amazon](https://www.amazon.com/uxcell-Silicone-Rings-Diameter-Gasket/dp/B082STZ4XL?th=1)
+| o-ring | for oxygen sensor, 22x19x1.5mm | [Amazon](https://www.amazon.com/uxcell-Silicone-Rings-Diameter-Gasket/dp/B082STZ4XL?th=1) | $7 for 30 |
 | oxygen sensor | Gravity: I2C Oxygen Sensor |  [DF Robot](https://www.dfrobot.com/product-2052.html) | $75 |
 | differential pressure sensor | Omron--D6F-PH0025AD2 |  [Digikey](https://www.digikey.com/en/products/detail/omron-electronics-inc-emc-div/d6f-ph0025amd2/15197363) | $28 |
 | cable for diff press sensor | DF-CABLE3 |  [Digikey](https://www.digikey.com/en/products/detail/omron-electronics-inc-emc-div/D6F-CABLE3/9471785) | $12 |
