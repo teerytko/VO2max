@@ -1,1 +1,7 @@
-I'll be adding the various versions of the 3D print files as I go so you can follow the progress and make any comments or recs.  
+## Test 3D Print Files
+
+At the end of this project none of these will be what you'll use, but in the meantime you may find this useful.  Feel free to print these out or take a look and make any suggestions.
+
+There will be multiple files in here, pay close attention to the file names (T0 vs T1 etc).
+
+STEP files are in the zip folders if you want to get jiggy with 'em. 
