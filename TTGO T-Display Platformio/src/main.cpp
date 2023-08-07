@@ -103,8 +103,8 @@ struct
     short vo2;
 } cheetah;
 
-#include <Adafruit_BMP085.h> //Library for barometric sensor
-Adafruit_BMP085 bmp;
+#include <Adafruit_BMP280.h> //Library for barometric sensor
+Adafruit_BMP280 bmp;
 
 // Starts Screen for TTGO device
 TFT_eSPI tft = TFT_eSPI(); // Invoke library, pins defined in User_Setup.h
