@@ -18,7 +18,7 @@ Core Debug Level: None
 PSRAM: Disabled*/
 
 // Set this to the correct printed case venturi diameter
-#define DIAMETER 19
+#define DIAMETER 20
 
 #define VERBOSE // additional debug logging
 
