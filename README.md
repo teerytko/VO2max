@@ -13,9 +13,9 @@ Small and light enough to be worn for a full workout.
 Able to measure resting as well maximum VO2.
 
 ## App Intent
--allows an athlete to monitor real time [RER](https://www.adinstruments.com/signal/rer#:~:text=Respiratory%20Exchange%20Ratio%20(RER)%20is,is%20operating%20aerobically%20or%20anaerobically.).
--allows an athlete to monitor gross mechanical efficiency
--allows for BLE or WiFi or ANT+ connections from any other sensor
+Allows an athlete to monitor real time [RER](https://www.adinstruments.com/signal/rer#:~:text=Respiratory%20Exchange%20Ratio%20(RER)%20is,is%20operating%20aerobically%20or%20anaerobically.).
+Allows an athlete to monitor gross mechanical efficiency
+Allows for BLE or WiFi or ANT+ connections from any other sensor
 - heart rate monitor
 - stride rate or length
 - power meter
