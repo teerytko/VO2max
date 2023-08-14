@@ -14,7 +14,9 @@ Able to measure resting as well maximum VO2.
 
 ## App Intent
 Allows an athlete to monitor real time [RER](https://www.adinstruments.com/signal/rer#:~:text=Respiratory%20Exchange%20Ratio%20(RER)%20is,is%20operating%20aerobically%20or%20anaerobically.).
+
 Allows an athlete to monitor gross mechanical efficiency
+
 Allows for BLE or WiFi or ANT+ connections from any other sensor
 - heart rate monitor
 - stride rate or length
