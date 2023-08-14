@@ -3,11 +3,24 @@ Super cool project to build your own VO2 Max mask.  Your "VO2 Max" is a measure 
 
 Original idea and detailed build instructions can be found on [Instructable](https://www.instructables.com/Accurate-VO2-Max-for-Zwift-and-Strava/). Other designs can be found [here, a UC Davis Med Center project](https://faculty.engineering.ucdavis.edu/knoesen/wp-content/uploads/sites/119/2016/12/OOCOO_WirelessHealthSubmission_Final.pdf) and a [commercial version that costs just under US$6,000](https://vo2master.com/).
 
-I found the original build instructions comprehensive but fairly dense and disjointed, especially regarding the upgrades by urissel and ivor.  They were rad, but I was constantly scrolling and refreshing pages to find the next step.
-
-I also thought there's a chance I can put my shoulder to the wheel here and rally a few experts to really improve some aspects of this; keep track of that over in the Wiki (up top for those you not used to Github).
-
 This fork of [Ivor's excellent Github work](https://github.com/ihewitt/VO2max) incorporates the CO2 enhancements from Ulrich Rissel.  The intent with this repo is to make it as easy as possible to build a world class piece of kit that'll add useful metrics to your training.
+
+## Design Constraints
+Less than $200 for all parts and printing.
+Printable by anyone with a 3D printer (easy print files).
+Can handle up to 200 liters per minute of exhaled air.
+Small and light enough to be worn for a full workout.
+Able to measure resting as well maximum VO2.
+
+## App Intent
+-allows an athlete to monitor real time [RER](https://www.adinstruments.com/signal/rer#:~:text=Respiratory%20Exchange%20Ratio%20(RER)%20is,is%20operating%20aerobically%20or%20anaerobically.).
+-allows an athlete to monitor gross mechanical efficiency
+-allows for BLE or WiFi or ANT+ connections from any other sensor
+- heart rate monitor
+- stride rate or length
+- power meter
+- rowing stroke rate
+  
 
 Currently (July 23th 2023) a work in progress.  Refer to the Wiki for exactly where we are now.
 
