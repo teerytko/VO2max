@@ -22,7 +22,7 @@ Able to measure resting as well maximum VO2.
 - rowing stroke rate
   
 
-Currently (July 23th 2023) a work in progress.  Refer to the Wiki for exactly where we are now.
+Currently (July 23th 2023) a work in progress.  Refer to the [Wiki](https://github.com/meteoscientific/VO2max/wiki) for exactly where we are now.
 
 ## Order Sensors, board, and assorted fasteners.
 Check the [BOM](https://github.com/meteoscientific/VO2max/blob/main/BOM.md) for all the various parts to order, they can take a week or two to come in.
