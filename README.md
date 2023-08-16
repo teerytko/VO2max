@@ -24,10 +24,10 @@ Allows for BLE or WiFi or ANT+ connections from any other sensor
 - rowing stroke rate
   
 ## Versions
-V1 - Original version that works, can be found via the Instructable link above.
-V2 - Upgraded version by Urissel & Ivor, includes the CO2 & ambient temp/pressure to adapt to different elevation & temperatures.
-V3 - Proposed by Mahmoud, this is the T version.  Currently abandoned due to issues with getting correct sensor readings.
-V4 - Proposed by Stefan, affectionately called "The Snork".  Latest version.
+- V1 - Original version that works, can be found via the Instructable link above.
+- V2 - Upgraded version by Urissel & Ivor, includes the CO2 & ambient temp/pressure to adapt to different elevation & temperatures.
+- V3 - Proposed by Mahmoud, this is the T version.  Currently abandoned due to issues with getting correct sensor readings.
+- V4 - Proposed by Stefan, affectionately called "The Snork".  Latest version.
 
 ## Current Status
 Currently (August 16th 2023) a work in progress.  Refer to the [Wiki](https://github.com/meteoscientific/VO2max/wiki) for exactly where we are now.
