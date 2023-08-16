@@ -23,8 +23,16 @@ Allows for BLE or WiFi or ANT+ connections from any other sensor
 - power meter
 - rowing stroke rate
   
+## Versions
+V1 - Original version that works, can be found via the Instructable link above.
+V2 - Upgraded version by Urissel & Ivor, includes the CO2 & ambient temp/pressure to adapt to different elevation & temperatures.
+V3 - Proposed by Mahmoud, this is the T version.  Currently abandoned due to issues with getting correct sensor readings.
+V4 - Proposed by Stefan, affectionately called "The Snork".  Latest version.
 
-Currently (July 23th 2023) a work in progress.  Refer to the [Wiki](https://github.com/meteoscientific/VO2max/wiki) for exactly where we are now.
+## Current Status
+Currently (August 16th 2023) a work in progress.  Refer to the [Wiki](https://github.com/meteoscientific/VO2max/wiki) for exactly where we are now.
+
+### Steps to Build & Use - INCOMPLETE
 
 ## Order Sensors, board, and assorted fasteners.
 Check the [BOM](https://github.com/meteoscientific/VO2max/blob/main/BOM.md) for all the various parts to order, they can take a week or two to come in.
@@ -35,17 +43,16 @@ Print out the 3D parts using PLA.  This is still a work in progress, but feel fr
 <br>Test fit all parts and make sure you know where everything goes; that will make the next steps much easier.
 
 ## Program Board
-When you first get the board, hold down the boot button while plugging it in, and keep that down.  You need to erase everything on the board before you load the rest.  From there, you should be alb to use the Platformio folder to load everything you'll need.  I did this on a Windows computer (a little Beelink with a monitor & display) because I couldn't get it to work on my Mac.
+Originally this project was built with the Arduino IDE.  A few of us nerds decided that Platformio might be easier and more rad, so we're using that.
+
+When you first get the board, hold down the boot button while plugging it in, and keep that down.  You need to erase everything on the board before you load the rest.  From there, you should be able to use the Platformio folder to load everything you'll need.  I did this on a Windows computer (a little Beelink with a monitor & display) because I couldn't get it to work on my Mac.
 
 ## Wire It Up
 
 ## Assembly
-I painted my button housings black for contrast.  Use superglue to secure the button housing to the case, make sure the button is inside first.
-<figure>
-    <img src="/images/button_housing.jpg" width="640" height="327"
-         alt="Button Housing">
-</figure><br><br>
- 
+
+### Older Information Relevant to V2 (Urissel/Ivor updated version)
+
 ## Arduino (from Ivor)
 Source code for Arduino under "VO2Max" - Arduino board settings to use for TTGO T-Display:
 
