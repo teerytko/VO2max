@@ -35,7 +35,7 @@ int vref = 1100;
 #include <SPI.h>
 #include <TFT_eSPI.h> // Graphics and font library for ST7735 driver chip
 #include <Wire.h>
-
+#include "Adafruit_BMP280.h"
 #include "Sensirion_GadgetBle_Lib.h" //library to connect to Sensirion App
 
 // declarations for bluetooth serial --------------
@@ -353,10 +353,10 @@ void setup()
         tft.drawString("BT ready", 0, 25, 4);
     }
 
-    // init barometric sensor BMP180 ----------
-    if (!bmp.begin())
+    // init barometric sensor BMP280 ----------
+    if (!bmp.begin(BMP280_ADDRESS))
     {
-        // Serial.println("BMP180 sensor error!");
+        // Serial.println("BMP280 sensor error! Check your lib file I2C address");
         tft.drawString("Temp/Pres. Error!", 0, 50, 4);
     }
     else
