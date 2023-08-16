@@ -31,11 +31,11 @@ int vref = 1100;
 
 #include "DFRobot_OxygenSensor.h" //Library for Oxygen sensor
 #include "SCD30.h"                //Library for CO2 sensor
-#include "Omron_D6FPH.h"          //Library for pressure sensor
+#include "Omron_D6FPH.h"          //Library for differential pressure sensor
 #include <SPI.h>
 #include <TFT_eSPI.h> // Graphics and font library for ST7735 driver chip
 #include <Wire.h>
-#include "Adafruit_BMP280.h"
+#include "Adafruit_BMP280.h" // Library for BMP280 ambient temp and pressure, set correct I2C address 0x76
 #include "Sensirion_GadgetBle_Lib.h" //library to connect to Sensirion App
 
 // declarations for bluetooth serial --------------
