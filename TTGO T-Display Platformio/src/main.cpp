@@ -176,6 +176,7 @@ struct
     bool sens_on = true;          // Output as sensiron data
     bool cheet_on = false;        // Output as vo2master for GoldenCheetah
     bool co2_on = false;          // CO2 sensor active
+    bool bmp_on = false;          // Pressure sensor sensor active
 } settings;
 
 float TimerVolCalc = 0.0;
@@ -342,6 +343,7 @@ void setup()
     {
         tft.drawString("Serial ok", 0, 0, 4);
     }
+    Serial.print("TeemuR: setup!\n");
 
     // init serial bluetooth -----------
     if (!SerialBT.begin("VO2max"))
@@ -354,6 +356,7 @@ void setup()
     }
 
     // init barometric sensor BMP280 ----------
+    /*
     if (!bmp.begin(BMP280_ADDRESS))
     {
         // Serial.println("BMP280 sensor error! Check your lib file I2C address");
@@ -364,6 +367,7 @@ void setup()
         // Serial.println("Temp./pressure I2c connect success!");
         tft.drawString("Temp/Pres. ok", 0, 50, 4);
     }
+    */
 
     // init O2 sensor DF-Robot -----------
     if (!Oxygen.begin(Oxygen_IICAddress))
@@ -377,6 +381,7 @@ void setup()
 
     // init CO2 sensor Sensirion SCD30 -------------
     // check if sensor is connected?
+    /*
     scd30.initialize();
     scd30.setAutoSelfCalibration(0);
     while (!scd30.isAvailable())
@@ -384,6 +389,7 @@ void setup()
         tft.drawString("CO2init..", 120, 75, 4);
     }
     tft.drawString("CO2 ok", 120, 75, 4);
+    */
 
     // init flow/pressure sensor Omron D6F-PF0025AD1 (or D6F-PF0025AD2) ----------
     while (!mySensor.begin(MODEL_0025AD1))
@@ -406,7 +412,8 @@ void setup()
     }
 
     CheckInitialO2();
-    CheckInitialCO2();
+    // Disable CO2 for now
+    // CheckInitialCO2();
 
     doMenu();
 
