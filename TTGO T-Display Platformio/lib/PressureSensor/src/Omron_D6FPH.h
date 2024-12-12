@@ -43,7 +43,8 @@ typedef enum {
 enum sensorModels{
     MODEL_0025AD1 = 0,
     MODEL_0505AD3,
-    MODEL_5050AD3
+    MODEL_5050AD3,
+    MODEL_5050AD4
 };
 
 class Omron_D6FPH

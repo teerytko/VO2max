@@ -343,7 +343,6 @@ void setup()
     {
         tft.drawString("Serial ok", 0, 0, 4);
     }
-    Serial.print("TeemuR: setup!\n");
 
     // init serial bluetooth -----------
     if (!SerialBT.begin("VO2max"))
@@ -392,7 +391,7 @@ void setup()
     */
 
     // init flow/pressure sensor Omron D6F-PF0025AD1 (or D6F-PF0025AD2) ----------
-    while (!mySensor.begin(MODEL_0025AD1))
+    while (!mySensor.begin(MODEL_5050AD4))
     {
         // Serial.println("Flow sensor error!");
         tft.drawString("Flow-Sensor ERROR!", 0, 100, 4);
@@ -462,7 +461,6 @@ void loop()
         { // default co2values
             co2temp = TempC;
         }
-
         vo2maxCalc(); // vo2 max function call
 
         /*if (TotalTime >= 10000)*/ {
@@ -647,7 +645,9 @@ void ConvertTime(float ms)
 
 void VolumeCalc()
 {
-
+#ifdef VERBOSE
+    Serial.print("TeemuR: VolumeCalc\n");
+#endif
     // Read pressure from Omron D6F PH0025AD1 (or D6F PH0025AD2)
     float pressureraw = mySensor.getPressure();
     pressure = pressure / 2 + pressureraw / 2;
@@ -673,6 +673,12 @@ void VolumeCalc()
     }
     if (pressure < 0)
         pressure = 0;
+
+#ifdef VERBOSE
+    Serial.print("\nTeemuR: pressure: ");
+    Serial.print(pressure);
+    Serial.print("\n");
+#endif
 
     if (pressure < pressThreshold && readVE == 1)
     { // read volumeVE
@@ -711,6 +717,12 @@ void VolumeCalc()
 
     if (pressure >= pressThreshold)
     { // ongoing integral of volumeTotal
+#ifdef VERBOSE
+    Serial.print("\nTeemuR: volumeTotal: ");
+    Serial.print(volumeTotal);
+    Serial.print("\n");
+#endif
+
         if (volumeTotal > 50)
             readVE = 1;
         massFlow = 1000 * sqrt((abs(pressure) * 2 * rho) / ((1 / (pow(area_2, 2))) - (1 / (pow(area_1, 2))))); // Bernoulli equation
