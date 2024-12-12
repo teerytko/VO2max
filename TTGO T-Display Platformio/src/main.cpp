@@ -176,6 +176,7 @@ struct
     bool sens_on = true;          // Output as sensiron data
     bool cheet_on = false;        // Output as vo2master for GoldenCheetah
     bool co2_on = false;          // CO2 sensor active
+    bool bmp_on = false;          // Pressure sensor sensor active
 } settings;
 
 float TimerVolCalc = 0.0;
@@ -354,6 +355,7 @@ void setup()
     }
 
     // init barometric sensor BMP280 ----------
+    /*
     if (!bmp.begin(BMP280_ADDRESS))
     {
         // Serial.println("BMP280 sensor error! Check your lib file I2C address");
@@ -364,6 +366,7 @@ void setup()
         // Serial.println("Temp./pressure I2c connect success!");
         tft.drawString("Temp/Pres. ok", 0, 50, 4);
     }
+    */
 
     // init O2 sensor DF-Robot -----------
     if (!Oxygen.begin(Oxygen_IICAddress))
@@ -377,6 +380,7 @@ void setup()
 
     // init CO2 sensor Sensirion SCD30 -------------
     // check if sensor is connected?
+    /*
     scd30.initialize();
     scd30.setAutoSelfCalibration(0);
     while (!scd30.isAvailable())
@@ -384,9 +388,10 @@ void setup()
         tft.drawString("CO2init..", 120, 75, 4);
     }
     tft.drawString("CO2 ok", 120, 75, 4);
+    */
 
     // init flow/pressure sensor Omron D6F-PF0025AD1 (or D6F-PF0025AD2) ----------
-    while (!mySensor.begin(MODEL_0025AD1))
+    while (!mySensor.begin(MODEL_5050AD4))
     {
         // Serial.println("Flow sensor error!");
         tft.drawString("Flow-Sensor ERROR!", 0, 100, 4);
@@ -406,7 +411,8 @@ void setup()
     }
 
     CheckInitialO2();
-    CheckInitialCO2();
+    // Disable CO2 for now
+    // CheckInitialCO2();
 
     doMenu();
 
@@ -455,7 +461,6 @@ void loop()
         { // default co2values
             co2temp = TempC;
         }
-
         vo2maxCalc(); // vo2 max function call
 
         /*if (TotalTime >= 10000)*/ {
@@ -640,7 +645,9 @@ void ConvertTime(float ms)
 
 void VolumeCalc()
 {
-
+#ifdef VERBOSE
+    Serial.print("TeemuR: VolumeCalc\n");
+#endif
     // Read pressure from Omron D6F PH0025AD1 (or D6F PH0025AD2)
     float pressureraw = mySensor.getPressure();
     pressure = pressure / 2 + pressureraw / 2;
@@ -666,6 +673,12 @@ void VolumeCalc()
     }
     if (pressure < 0)
         pressure = 0;
+
+#ifdef VERBOSE
+    Serial.print("\nTeemuR: pressure: ");
+    Serial.print(pressure);
+    Serial.print("\n");
+#endif
 
     if (pressure < pressThreshold && readVE == 1)
     { // read volumeVE
@@ -704,6 +717,12 @@ void VolumeCalc()
 
     if (pressure >= pressThreshold)
     { // ongoing integral of volumeTotal
+#ifdef VERBOSE
+    Serial.print("\nTeemuR: volumeTotal: ");
+    Serial.print(volumeTotal);
+    Serial.print("\n");
+#endif
+
         if (volumeTotal > 50)
             readVE = 1;
         massFlow = 1000 * sqrt((abs(pressure) * 2 * rho) / ((1 / (pow(area_2, 2))) - (1 / (pow(area_1, 2))))); // Bernoulli equation

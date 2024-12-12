@@ -21,7 +21,7 @@ boolean Omron_D6FPH::begin(TwoWire &wirePort, uint8_t deviceAddress, sensorModel
   }
   return false;
 }
-
+// https://www.mouser.fi/datasheet/2/307/en_d6f_ph-595439.pdf
 void Omron_D6FPH::setSensorModel(sensorModels sensorModel){
     _sensorModel = sensorModel;
     switch (_sensorModel)
@@ -35,6 +35,11 @@ void Omron_D6FPH::setSensorModel(sensorModels sensorModel){
         _rangeMode = 50;
         _rangeModeMulVal = 2;
         _rangeModeSubVal = 50;
+        break;
+    case MODEL_5050AD4:
+        _rangeMode = 1000;
+        _rangeModeMulVal = 1;
+        _rangeModeSubVal = 500;
         break;
     default:
         _rangeMode = 500;
