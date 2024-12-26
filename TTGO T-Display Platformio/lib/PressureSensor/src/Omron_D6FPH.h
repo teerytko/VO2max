@@ -30,7 +30,7 @@
 #define SERIAL_CTRL_R_WZ            2
 #define SERIAL_CTRL_VAL   (0x01 << SERIAL_CTRL_R_WZ | 0x01 << SERIAL_CTRL_REQ | 0x01 << SERIAL_CTRL_D_BYTE_CNT3)
 
-#if defined(__AVR__) || defined(ESP8266)
+//#if defined(__AVR__) || defined(ESP8266)
 typedef enum {
     I2C_ERROR_OK=0,
     I2C_ERROR_LENGTH,
@@ -38,7 +38,7 @@ typedef enum {
     I2C_ERROR_DATA_SENT_NACK,
     I2C_ERROR_OTHER
 } i2c_err_t;
-#endif
+//#endif
 
 enum sensorModels{
     MODEL_0025AD1 = 0,

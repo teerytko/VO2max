@@ -725,6 +725,10 @@ void VolumeCalc()
 
         if (volumeTotal > 50)
             readVE = 1;
+    Serial.print("TeemuR: rho = ");
+    Serial.print(rho);
+    Serial.println("\n");
+
         massFlow = 1000 * sqrt((abs(pressure) * 2 * rho) / ((1 / (pow(area_2, 2))) - (1 / (pow(area_1, 2))))); // Bernoulli equation
         volFlow = massFlow / rho;                                                                              // volumetric flow of air
         volFlow = volFlow * settings.correctionSensor;                                                         // correction of sensor calculations
@@ -954,11 +958,19 @@ void readCO2()
 
 void AirDensity()
 {
-    TempC = bmp.readTemperature(); // Temp from baro sensor BMP180
+    TempC = bmp.readTemperature(); // Temp from baro sensor BM280
+    Serial.print("TeemuR: AirDensity TempC = ");
+    Serial.print(TempC);
+    Serial.println("\n");
+
     // co2temp is temperature from CO2 sensor
     PresPa = bmp.readPressure();
     rho = PresPa / (co2temp + 273.15) / 287.058; // calculation of air density
     rhoBTPS = PresPa / (35 + 273.15) / 292.9;    // density at BTPS: 35°C, 95% humidity
+
+    Serial.print("TeemuR: AirDensity rho = ");
+    Serial.print(rho);
+    Serial.println("\n");
 }
 
 //--------------------------------------------------
