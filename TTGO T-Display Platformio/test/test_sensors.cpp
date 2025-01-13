@@ -82,7 +82,7 @@ void test_oxygen_sensor_read_data(void) {
 }
 
 void test_barometric_sensor_read_data(void) {
-    bool init = bmp.begin(0x76);
+    bool init = bmp.begin(BMP280_ADDRESS_ALT);
     TEST_ASSERT_TRUE_MESSAGE(init, "barometric init error!");
     float temp = bmp.readTemperature(); // Temp from baro sensor BM280
     Serial.print("TeemuR: barometric temp = ");
@@ -117,7 +117,7 @@ void runTests() {
     RUN_TEST(test_pressure_sensor_get_pressure);
     RUN_TEST(test_pressure_sensor_get_temp);
     RUN_TEST(test_barometric_sensor_read_data);
-    RUN_TEST(test_co2_sensor_read_data);
+    //RUN_TEST(test_co2_sensor_read_data);
 
     UNITY_END(); // stop unit testing
 

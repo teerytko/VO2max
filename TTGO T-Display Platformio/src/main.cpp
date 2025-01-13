@@ -110,7 +110,7 @@ Adafruit_BMP280 bmp;
 TFT_eSPI tft = TFT_eSPI(); // Invoke library, pins defined in User_Setup.h
 
 // Labels the pressure sensor: mySensor
-Omron_D6FPH mySensor;
+Omron_D6FPH presSensor;
 
 // Label of oxygen sensor
 DFRobot_OxygenSensor Oxygen;
@@ -355,8 +355,7 @@ void setup()
     }
 
     // init barometric sensor BMP280 ----------
-    /*
-    if (!bmp.begin(BMP280_ADDRESS))
+    if (!bmp.begin(BMP280_ADDRESS_ALT))
     {
         // Serial.println("BMP280 sensor error! Check your lib file I2C address");
         tft.drawString("Temp/Pres. Error!", 0, 50, 4);
@@ -366,7 +365,6 @@ void setup()
         // Serial.println("Temp./pressure I2c connect success!");
         tft.drawString("Temp/Pres. ok", 0, 50, 4);
     }
-    */
 
     // init O2 sensor DF-Robot -----------
     if (!Oxygen.begin(Oxygen_IICAddress))
@@ -391,7 +389,7 @@ void setup()
     */
 
     // init flow/pressure sensor Omron D6F-PF0025AD1 (or D6F-PF0025AD2) ----------
-    while (!mySensor.begin(MODEL_5050AD4))
+    while (!presSensor.begin(MODEL_5050AD4))
     {
         // Serial.println("Flow sensor error!");
         tft.drawString("Flow-Sensor ERROR!", 0, 100, 4);
@@ -649,7 +647,7 @@ void VolumeCalc()
     Serial.print("TeemuR: VolumeCalc\n");
 #endif
     // Read pressure from Omron D6F PH0025AD1 (or D6F PH0025AD2)
-    float pressureraw = mySensor.getPressure();
+    float pressureraw = presSensor.getPressure();
     pressure = pressure / 2 + pressureraw / 2;
 
     if (DEMO == 1)
@@ -658,6 +656,11 @@ void VolumeCalc()
         if ((millis() - TimerVO2calc) > 2500)
             pressure = 0; // TEST++++++++++++++++++++++++++++
     }
+#ifdef VERBOSE
+    Serial.print("\nTeemuR: pressure: ");
+    Serial.print(pressure);
+    Serial.print("\n");
+#endif
 
     if (isnan(pressure))
     { // isnan = is not a number,  unvalid sensor data
@@ -674,11 +677,6 @@ void VolumeCalc()
     if (pressure < 0)
         pressure = 0;
 
-#ifdef VERBOSE
-    Serial.print("\nTeemuR: pressure: ");
-    Serial.print(pressure);
-    Serial.print("\n");
-#endif
 
     if (pressure < pressThreshold && readVE == 1)
     { // read volumeVE
@@ -965,6 +963,9 @@ void AirDensity()
 
     // co2temp is temperature from CO2 sensor
     PresPa = bmp.readPressure();
+    Serial.print("TeemuR: AirDensity co2temp = ");
+    Serial.print(co2temp);
+    Serial.println("\n");
     rho = PresPa / (co2temp + 273.15) / 287.058; // calculation of air density
     rhoBTPS = PresPa / (35 + 273.15) / 292.9;    // density at BTPS: 35°C, 95% humidity
 
