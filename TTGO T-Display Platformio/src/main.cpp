@@ -229,7 +229,6 @@ GadgetBle gadgetBle = GadgetBle(GadgetBle::DataType::T_RH_CO2);
 // Forward declarations
 void readVoltage();     // read battery voltage
 void readCO2();         // read CO2 sensor
-void readButtons();     // read buttons
 void CheckInitialCO2(); // check initial CO2 value
 void CheckInitialO2();  // check initial O2 value
 void doMenu();          // menu for settings
@@ -644,7 +643,7 @@ void ConvertTime(float ms)
 void VolumeCalc()
 {
 #ifdef VERBOSE
-    Serial.print("TeemuR: VolumeCalc\n");
+    //Serial.print("TeemuR: VolumeCalc\n");
 #endif
     // Read pressure from Omron D6F PH0025AD1 (or D6F PH0025AD2)
     float pressureraw = presSensor.getPressure();
@@ -657,9 +656,9 @@ void VolumeCalc()
             pressure = 0; // TEST++++++++++++++++++++++++++++
     }
 #ifdef VERBOSE
-    Serial.print("\nTeemuR: pressure: ");
-    Serial.print(pressure);
-    Serial.print("\n");
+    //Serial.print("\nTeemuR: pressure: ");
+    //Serial.print(pressure);
+    //Serial.print("\n");
 #endif
 
     if (isnan(pressure))
@@ -957,21 +956,21 @@ void readCO2()
 void AirDensity()
 {
     TempC = bmp.readTemperature(); // Temp from baro sensor BM280
-    Serial.print("TeemuR: AirDensity TempC = ");
-    Serial.print(TempC);
-    Serial.println("\n");
+    //Serial.print("TeemuR: AirDensity TempC = ");
+    //Serial.print(TempC);
+    //Serial.println("\n");
 
     // co2temp is temperature from CO2 sensor
     PresPa = bmp.readPressure();
-    Serial.print("TeemuR: AirDensity co2temp = ");
-    Serial.print(co2temp);
-    Serial.println("\n");
+    //Serial.print("TeemuR: AirDensity co2temp = ");
+    //Serial.print(co2temp);
+    //Serial.println("\n");
     rho = PresPa / (co2temp + 273.15) / 287.058; // calculation of air density
     rhoBTPS = PresPa / (35 + 273.15) / 292.9;    // density at BTPS: 35°C, 95% humidity
 
-    Serial.print("TeemuR: AirDensity rho = ");
-    Serial.print(rho);
-    Serial.println("\n");
+    //Serial.print("TeemuR: AirDensity rho = ");
+    //Serial.print(rho);
+    //Serial.println("\n");
 }
 
 //--------------------------------------------------
@@ -1115,8 +1114,8 @@ void fnCalAir()
 
         TimerVolCalc = millis(); // part of the integral function to keep calculation volume over time
                                  // Resets amount of time between calcs
-
-    } while (TotalTime < 10000);
+    } while (digitalRead(buttonPin2));
+    // while (TotalTime < 10000);
 
     settings.correctionSensor = 3000 / volumeTotal2;
 

@@ -117,7 +117,7 @@ void runTests() {
     RUN_TEST(test_pressure_sensor_get_pressure);
     RUN_TEST(test_pressure_sensor_get_temp);
     RUN_TEST(test_barometric_sensor_read_data);
-    //RUN_TEST(test_co2_sensor_read_data);
+    RUN_TEST(test_co2_sensor_read_data);
 
     UNITY_END(); // stop unit testing
 
