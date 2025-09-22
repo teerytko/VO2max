@@ -49,6 +49,8 @@
 #define SCD30_SET_TEMPERATURE_OFFSET            0x5403
 #define SCD30_SET_ALTITUDE_COMPENSATION         0x5102
 #define SCD30_READ_SERIALNBR                    0xD033
+#define SCD30_READ_FW_VERSION                   0xD100
+#define SCD30_SOFT_RESET                        0xD304
 
 #define SCD30_SET_TEMP_OFFSET                   0x5403
 
@@ -60,10 +62,12 @@ class SCD30 {
 
     SCD30(void);
 
-    void initialize(void);
+    bool initialize(void);
 
     bool isAvailable(void);
-
+    bool readFwVersion(void);
+    void softReset(void);
+  
     void setAutoSelfCalibration(bool enable);
     void setMeasurementInterval(uint16_t interval);
 
@@ -76,12 +80,12 @@ class SCD30 {
 
     uint8_t calculateCrc(uint8_t* data, uint8_t len);
 
-    void writeCommand(uint16_t command);
-    void writeCommandWithArguments(uint16_t command, uint16_t arguments);
+    boolean writeCommand(uint16_t command);
+    boolean writeCommandWithArguments(uint16_t command, uint16_t arguments);
     uint16_t readRegister(uint16_t address);
 
-    void writeBuffer(uint8_t* data, uint8_t len);
-    void readBuffer(uint8_t* data, uint8_t len);
+    boolean writeBuffer(uint8_t* data, uint8_t len);
+    boolean readBuffer(uint8_t* data, uint8_t len);
 
     uint8_t devAddr;
 

@@ -377,7 +377,6 @@ void setup()
 
     // init CO2 sensor Sensirion SCD30 -------------
     // check if sensor is connected?
-    /*
     scd30.initialize();
     scd30.setAutoSelfCalibration(0);
     while (!scd30.isAvailable())
@@ -385,7 +384,6 @@ void setup()
         tft.drawString("CO2init..", 120, 75, 4);
     }
     tft.drawString("CO2 ok", 120, 75, 4);
-    */
 
     // init flow/pressure sensor Omron D6F-PF0025AD1 (or D6F-PF0025AD2) ----------
     while (!presSensor.begin(MODEL_5050AD4))

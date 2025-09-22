@@ -28,15 +28,21 @@
 */
 
 #include "SCD30.h"
+#include "esp32-hal-log.h"
 
 SCD30::SCD30(void) {
     devAddr = SCD30_I2C_ADDRESS;
 }
 
-void SCD30::initialize(void) {
+bool SCD30::initialize(void) {
     //Set temperature offset。
     //setTemperatureOffset(0);
-
+    int ver = 0;
+    ver = readFwVersion();
+    if (ver == 0) {
+        log_e("SCD30 not detected at 0x%x\n", devAddr);
+        return false;
+    }
     setMeasurementInterval(2); // 2 seconds between measurements
     startPeriodicMeasurment(); // start periodic measuments
 
@@ -49,7 +55,15 @@ void SCD30::setTemperatureOffset(uint16_t offset) {
 }
 
 bool SCD30::isAvailable(void) {
-    return readRegister(SCD30_GET_DATA_READY);
+    return readRegister(SCD30_GET_DATA_READY) == 1;
+}
+
+bool SCD30::readFwVersion(void) {
+    return readRegister(SCD30_READ_FW_VERSION);
+}
+
+void SCD30::softReset(void) {
+    writeCommandWithArguments(SCD30_SOFT_RESET, 1);
 }
 
 void SCD30::setAutoSelfCalibration(bool enable) {
@@ -99,14 +113,14 @@ void SCD30::getCarbonDioxideConcentration(float* result) {
 
 }
 
-void SCD30::writeCommand(uint16_t command) {
+boolean SCD30::writeCommand(uint16_t command) {
     Wire.beginTransmission(devAddr);
     Wire.write(command >> 8); // MSB
     Wire.write(command & 0xff); // LSB
-    Wire.endTransmission();
+    return (Wire.endTransmission() == ESP_OK);
 }
 
-void SCD30::writeCommandWithArguments(uint16_t command, uint16_t arguments) {
+boolean SCD30::writeCommandWithArguments(uint16_t command, uint16_t arguments) {
     uint8_t checkSum, buf[5] = { 0 };
 
     buf[0] = command >> 8;
@@ -116,31 +130,39 @@ void SCD30::writeCommandWithArguments(uint16_t command, uint16_t arguments) {
     checkSum = calculateCrc(&buf[2], 2);
     buf[4] = checkSum;
 
-    writeBuffer(buf, 5);
+    return writeBuffer(buf, 5);
 }
 
 uint16_t SCD30::readRegister(uint16_t address) {
     uint8_t buf[2] = { 0 };
 
-    writeCommand(address);
+   if (!writeCommand(address)) {
+        log_e("writeCommand failed!\n");
+        return 0;
+    }
     readBuffer(buf, 2);
 
     return ((((uint16_t)buf[0]) << 8) | buf[1]);
 }
 
-void SCD30::writeBuffer(uint8_t* data, uint8_t len) {
+boolean SCD30::writeBuffer(uint8_t* data, uint8_t len) {
     Wire.beginTransmission(devAddr);
     Wire.write(data, len);
-    Wire.endTransmission();
+    return (Wire.endTransmission() == ESP_OK);
 }
 
-void SCD30::readBuffer(uint8_t* data, uint8_t len) {
+boolean SCD30::readBuffer(uint8_t* data, uint8_t len) {
     uint8_t i = 0;
 
-    Wire.requestFrom(devAddr, len);
+    size_t size = Wire.requestFrom(devAddr, len);
+    if (size == 0) {
+        log_e("%s:%d requested %d bytes, got NO BYTES!\n", __FUNCTION__, __LINE__, len);
+        return false;
+    }
     while (Wire.available()) {
         data[i ++] = Wire.read();
     }
+    return i == len;
 }
 
 uint8_t SCD30::calculateCrc(uint8_t data[], uint8_t len) {

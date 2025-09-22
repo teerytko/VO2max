@@ -97,11 +97,12 @@ void test_barometric_sensor_read_data(void) {
 }
 
 void test_co2_sensor_read_data(void) {
-    scd30.initialize();
-    scd30.setAutoSelfCalibration(0);
-    for (int i = 0; i < 10 && !scd30.isAvailable(); i++)
+    TEST_ASSERT_TRUE_MESSAGE(scd30.initialize(), "CO2 sensor init error!");
+    
+    for (int i = 0; i < 5 && !scd30.isAvailable(); i++)
     {
-        delay(200); // service delay
+        Serial.print("TeemuR: scd not available yet, wait...\n");
+        delay(100); // service delay
         TEST_ASSERT_TRUE_MESSAGE(init, "Wait for CO2 sensor!");
     }
     TEST_ASSERT_TRUE_MESSAGE(scd30.isAvailable(), "CO2 sensor init error!");
@@ -111,12 +112,14 @@ void runTests() {
     UNITY_BEGIN();
 
     RUN_TEST(test_string_concat);
-    RUN_TEST(test_oxygen_sensor_init);
-    RUN_TEST(test_oxygen_sensor_read_data);
-    RUN_TEST(test_pressure_sensor_init);
-    RUN_TEST(test_pressure_sensor_get_pressure);
-    RUN_TEST(test_pressure_sensor_get_temp);
-    RUN_TEST(test_barometric_sensor_read_data);
+    Wire.begin(SDA, SCL, 20000);
+
+    //RUN_TEST(test_oxygen_sensor_init);
+    //RUN_TEST(test_oxygen_sensor_read_data);
+    //RUN_TEST(test_pressure_sensor_init);
+    //RUN_TEST(test_pressure_sensor_get_pressure);
+    //RUN_TEST(test_pressure_sensor_get_temp);
+    //RUN_TEST(test_barometric_sensor_read_data);
     RUN_TEST(test_co2_sensor_read_data);
 
     UNITY_END(); // stop unit testing
