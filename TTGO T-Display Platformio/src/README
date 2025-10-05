@@ -4,6 +4,9 @@
 # build (cmd line)
 platformio.exe run -e lilygo-t-display
 
+# build and upload (cmd line)
+platformio.exe run --target upload -e lilygo-t-display
+
 # test
 platformio.exe test -e lilygo-t-display
 

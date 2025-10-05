@@ -36,7 +36,6 @@ int vref = 1100;
 #include <TFT_eSPI.h> // Graphics and font library for ST7735 driver chip
 #include <Wire.h>
 #include "Adafruit_BMP280.h" // Library for BMP280 ambient temp and pressure, set correct I2C address 0x76
-#include "Sensirion_GadgetBle_Lib.h" //library to connect to Sensirion App
 
 // declarations for bluetooth serial --------------
 #include "BluetoothSerial.h"
@@ -79,11 +78,6 @@ BLECharacteristic sensorPositionCharacteristic(BLEUUID((uint16_t)0x2A38), BLECha
 BLEDescriptor heartRateDescriptor(BLEUUID((uint16_t)0x2901));
 BLEDescriptor sensorPositionDescriptor(BLEUUID((uint16_t)0x2901)); // 0x2901: Characteristic User Description
 
-// GoldenCheetah service
-#define cheetahService BLEUUID("00001523-1212-EFDE-1523-785FEABCD123")
-BLECharacteristic cheetahCharacteristics(BLEUUID("00001524-1212-EFDE-1523-785FEABCD123"), BLECharacteristic::PROPERTY_NOTIFY | 0);
-BLEDescriptor cheetahDescriptor(BLEUUID((uint16_t)0x2901));
-
 class MyServerCallbacks : public BLEServerCallbacks
 {
     void onConnect(BLEServer *pServer) { _BLEClientConnected = true; };
@@ -92,16 +86,6 @@ class MyServerCallbacks : public BLEServerCallbacks
 };
 
 // ------------------------------------------
-
-struct
-{ // variables for GoldenCheetah
-    short freq;
-    byte temp;
-    byte hum;
-    short rmv;
-    short feo2;
-    short vo2;
-} cheetah;
 
 #include <Adafruit_BMP280.h> //Library for barometric sensor
 Adafruit_BMP280 bmp;
@@ -172,9 +156,6 @@ struct
     int version = 1;              // Make sure saved data is right version
     float correctionSensor = 1.0; // calculated from 3L calibration syringe
     float weightkg = 75.0;        // Standard-body-weight
-    bool heart_on = false;        // Output vo2 as a HRM
-    bool sens_on = true;          // Output as sensiron data
-    bool cheet_on = false;        // Output as vo2master for GoldenCheetah
     bool co2_on = false;          // CO2 sensor active
     bool bmp_on = false;          // Pressure sensor sensor active
 } settings;
@@ -223,9 +204,6 @@ float PresPa = 101325; // uncorrected (absolute) barometric pressure
 
 float Battery_Voltage = 0.0;
 
-// settings for Sensirion App
-GadgetBle gadgetBle = GadgetBle(GadgetBle::DataType::T_RH_CO2);
-
 // Forward declarations
 void readVoltage();     // read battery voltage
 void readCO2();         // read CO2 sensor
@@ -233,13 +211,11 @@ void CheckInitialCO2(); // check initial CO2 value
 void CheckInitialO2();  // check initial O2 value
 void doMenu();          // menu for settings
 void showParameters();  // show parameters on OLED
-void InitBLE();         // initialize Bluetooth
 void VolumeCalc();      // calculate volume
 void vo2maxCalc();      // calculate VO2max
 void showScreen();      // show screen on OLED
 void ExcelStream();     // stream data to Excel
 void ExcelStreamBT();   // stream data to Excel via Bluetooth
-void GadgetWrite();     // write data to Sensirion App
 void VO2Notify();       // notify VO2max to Sensirion App
 void ReadButtons();     // read buttons
 void tftScreen1();      // show screen 1 on TFT
@@ -353,18 +329,6 @@ void setup()
         tft.drawString("BT ready", 0, 25, 4);
     }
 
-    // init barometric sensor BMP280 ----------
-    if (!bmp.begin(BMP280_ADDRESS_ALT))
-    {
-        // Serial.println("BMP280 sensor error! Check your lib file I2C address");
-        tft.drawString("Temp/Pres. Error!", 0, 50, 4);
-    }
-    else
-    {
-        // Serial.println("Temp./pressure I2c connect success!");
-        tft.drawString("Temp/Pres. ok", 0, 50, 4);
-    }
-
     // init O2 sensor DF-Robot -----------
     if (!Oxygen.begin(Oxygen_IICAddress))
     {
@@ -395,16 +359,6 @@ void setup()
     tft.drawString("Flow-Sensor ok", 0, 100, 4);
     delay(2000);
 
-    // activate Sensirion App ----------
-    if (settings.sens_on)
-    {
-        gadgetBle.begin();
-        gadgetBle.writeCO2(1);
-        gadgetBle.writeTemperature(1);
-        gadgetBle.writeHumidity(1);
-        gadgetBle.commit();
-    }
-
     CheckInitialO2();
     // Disable CO2 for now
     // CheckInitialCO2();
@@ -413,7 +367,6 @@ void setup()
 
     showParameters();
 
-    InitBLE(); // init BLE for transmitting VO2 as heartrate
     bpm = 30;  // initial test value
 
     tft.fillScreen(TFT_BLACK);
@@ -466,11 +419,6 @@ void loop()
         ExcelStream();   // send csv data via wired com port
         ExcelStreamBT(); // send csv data via Bluetooth com port
 
-        if (settings.sens_on)
-            GadgetWrite(); // Send to sensirion
-        if (settings.cheet_on)
-            VO2Notify(); // Send to GoldenCheetah as VO2 Master
-
         // send BLE data ----------------
 
         bpm = int(vo2Max + 0.5);
@@ -484,13 +432,6 @@ void loop()
         // Serial.println(energyUsed);
         delay(100);
 
-        if (settings.heart_on)
-        {
-            heartRateMeasurementCharacteristics.setValue(heart, 8); // set the new value for heartrate
-            heartRateMeasurementCharacteristics.notify();           // send a notification that value has changed
-
-            sensorPositionCharacteristic.setValue(hrmPos, 1);
-        }
         // bpm++; // TEST only
         // ------------
     }
@@ -528,8 +469,6 @@ void loop()
 
     TimerVolCalc = millis(); // part of the integral function to keep calculation volume over time
     // Resets amount of time between calcs
-    if (settings.sens_on)
-        gadgetBle.handleEvents();
 }
 
 //----------------------------------------------------------------------------------------------------------
@@ -735,38 +674,6 @@ void VolumeCalc()
         expiratVol = (volumeTotal2 - volumeTotalOld) / 1000;
         volumeTotalOld = volumeTotal2;
     }
-}
-
-//--------------------------------------------------
-void GadgetWrite()
-{
-    // Send to sensirion app
-    gadgetBle.writeCO2(vo2Total);
-    gadgetBle.writeTemperature(vo2Max);
-    gadgetBle.writeHumidity(lastO2);
-    gadgetBle.commit();
-}
-
-//--------------------------------------------------
-// Output as basic VO2 Master data for GoldenCheetah
-void VO2Notify()
-{
-    if (settings.co2_on)
-    {
-        cheetah.temp = co2temp;
-        cheetah.hum = co2hum; // humid
-    }
-    else
-    {
-        cheetah.temp = TempC;
-        cheetah.hum = 0; // humid
-    }
-    cheetah.rmv = volumeVEmean;
-    cheetah.vo2 = vo2Max;
-    cheetah.feo2 = lastO2 * 100;
-
-    cheetahCharacteristics.setValue((uint8_t *)&cheetah, 10);
-    cheetahCharacteristics.notify();
 }
 
 //--------------------------------------------------
@@ -1138,9 +1045,6 @@ int icount = 0;
 MenuItem menuitems[] = {{icount++, "Recalibrate O2", false, &fnCalO2, 0},
                         {icount++, "Calibrate Flow", false, &fnCalAir, 0},
                         {icount++, "Set Weight", false, &GetWeightkg, 0},
-                        {icount++, "Heart", true, 0, &settings.heart_on},
-                        {icount++, "Sensirion", true, 0, &settings.sens_on},
-                        {icount++, "Cheetah", true, 0, &settings.cheet_on},
                         {icount++, "CO2 sensor", true, 0, &settings.co2_on},
                         {icount++, "Done.", false, 0, 0}};
 
@@ -1546,64 +1450,6 @@ void readVoltage()
         tft.setTextColor(TFT_WHITE, TFT_RED); // battery critical
     tft.setCursor(0, 0, 4);
     tft.print(String(Battery_Voltage) + "V");
-}
-
-//---------------------------------------------------------
-
-void InitBLE()
-{
-    BLEDevice::init("VO2-HR"); // creates the device name
-
-    // (1) Create the BLE Server
-    BLEServer *pServer = BLEDevice::createServer(); // creates the BLE server
-    pServer->setCallbacks(new MyServerCallbacks()); // creates the server callback function
-
-    // (2) Create the BLE Service "heartRateService"
-    if (settings.heart_on)
-    {
-        BLEService *pHeart = pServer->createService(heartRateService); // creates heatrate service with 0x180D
-
-        // (3) Create the characteristics, descriptor, notification
-        pHeart->addCharacteristic(&heartRateMeasurementCharacteristics); // creates heartrate
-        // characteristics 0x2837
-        heartRateDescriptor.setValue("Rate from 0 to 200"); // describtion of the characteristic
-        heartRateMeasurementCharacteristics.addDescriptor(&heartRateDescriptor);
-        heartRateMeasurementCharacteristics.addDescriptor(new BLE2902()); // necessary for notifications
-        // client switches server notifications on/off via BLE2902 protocol
-
-        // (4) Create additional characteristics
-        pHeart->addCharacteristic(&sensorPositionCharacteristic);
-        sensorPositionDescriptor.setValue("Position 0 - 6");
-        sensorPositionCharacteristic.addDescriptor(&sensorPositionDescriptor);
-        pHeart->start();
-    }
-
-    // (5) Create the BLE Service
-    if (settings.cheet_on)
-    {
-        BLEService *pCheetah = pServer->createService(cheetahService);
-        pCheetah->addCharacteristic(&cheetahCharacteristics);
-        cheetahDescriptor.setValue("VO2 Data");
-        cheetahCharacteristics.addDescriptor(&cheetahDescriptor);
-        cheetahCharacteristics.addDescriptor(new BLE2902());
-        pCheetah->start();
-    }
-    BLEAdvertising *pAdvertising = pServer->getAdvertising();
-
-    if (settings.cheet_on)
-    {
-        pAdvertising->addServiceUUID(cheetahService);
-    }
-    if (settings.heart_on)
-    {
-        pAdvertising->addServiceUUID(heartRateService);
-    }
-    pAdvertising->setScanResponse(true);
-    pAdvertising->setMinPreferred(0x06);
-    pAdvertising->setMinPreferred(0x12);
-
-    // (6) start the server and the advertising
-    BLEDevice::startAdvertising();
 }
 
 //---------------------------------------------------------
