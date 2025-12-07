@@ -32,8 +32,8 @@
   ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
  */
- 
- 
+
+
 #include <Arduino.h>
 #include <Wire.h>
 #include "DFRobot_OxygenSensor.h"
@@ -46,10 +46,21 @@ DFRobot_OxygenSensor::~DFRobot_OxygenSensor()
 }
 
 /* join i2c bus (address optional for master) */
+bool DFRobot_OxygenSensor::init(uint8_t addr)
+{
+  this->_addr = addr;              // Set the host address
+  Wire.beginTransmission(_addr);
+  if(Wire.endTransmission() == 0) {
+    return true;
+  }
+  return false;
+}
+
+/* join i2c bus (address optional for master) */
 bool DFRobot_OxygenSensor::begin(uint8_t addr)
 {
-  this->_addr = addr;              // Set the host address 
-  Wire.begin();                     // connecting the i2c bus 
+  this->_addr = addr;              // Set the host address
+  Wire.begin();                     // connecting the i2c bus
   Wire.beginTransmission(_addr);
   if(Wire.endTransmission() == 0) {
     return true;
@@ -95,13 +106,13 @@ void DFRobot_OxygenSensor::Calibrate(float vol, float mv) {
 }
 
 /* Reading oxygen concentration */
-float DFRobot_OxygenSensor::ReadOxygenData(uint8_t CollectNum) 
+float DFRobot_OxygenSensor::ReadOxygenData(uint8_t CollectNum)
 {
   uint8_t rxbuf[10]={0}, k = 0;
   static uint8_t i = 0 ,j = 0;
   ReadFlash();
   if(CollectNum > 0) {
-    for(j = CollectNum - 1;  j > 0; j--) {  OxygenData[j] = OxygenData[j-1]; } 
+    for(j = CollectNum - 1;  j > 0; j--) {  OxygenData[j] = OxygenData[j-1]; }
     Wire.beginTransmission(_addr);
     Wire.write(OXYGEN_DATA_REGISTER);
     Wire.endTransmission();
@@ -118,7 +129,7 @@ float DFRobot_OxygenSensor::ReadOxygenData(uint8_t CollectNum)
 }
 
 /* Get the average data */
-float DFRobot_OxygenSensor::getAverageNum(float bArray[], uint8_t iFilterLen) 
+float DFRobot_OxygenSensor::getAverageNum(float bArray[], uint8_t iFilterLen)
 {
   uint8_t i = 0;
   double bTemp = 0;

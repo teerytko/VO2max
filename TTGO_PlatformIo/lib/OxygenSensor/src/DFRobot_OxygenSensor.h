@@ -52,6 +52,7 @@ class DFRobot_OxygenSensor{
 public:
   DFRobot_OxygenSensor();
   ~DFRobot_OxygenSensor();
+  bool     init(uint8_t addr = ADDRESS_0);
   bool     begin(uint8_t addr = ADDRESS_0);
   void     Calibrate(float vol, float mv = 0);
   float    ReadOxygenData(uint8_t CollectNum);

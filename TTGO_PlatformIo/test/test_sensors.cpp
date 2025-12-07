@@ -61,7 +61,7 @@ void test_pressure_sensor_get_temp(void) {
 }
 
 void test_oxygen_sensor_init(void) {
-    bool init = Oxygen.begin(Oxygen_IICAddress);
+    bool init = Oxygen.init(Oxygen_IICAddress);
     if (!init)
         Serial.print("O2 init error!\n");
     else
@@ -70,7 +70,7 @@ void test_oxygen_sensor_init(void) {
 }
 
 void test_oxygen_sensor_read_data(void) {
-    bool init = Oxygen.begin(Oxygen_IICAddress);
+    bool init = Oxygen.init(Oxygen_IICAddress);
     TEST_ASSERT_TRUE_MESSAGE(init, "O2 init error!");
     for (int i = 0; i < 10; i++) {
         float data = Oxygen.ReadOxygenData(10);
@@ -97,6 +97,7 @@ void test_barometric_sensor_read_data(void) {
 }
 
 void test_co2_sensor_read_data(void) {
+    float co2data[3] = {0,0,0};
     TEST_ASSERT_TRUE_MESSAGE(scd30.initialize(), "CO2 sensor init error!");
     
     for (int i = 0; i < 5 && !scd30.isAvailable(); i++)
@@ -105,22 +106,29 @@ void test_co2_sensor_read_data(void) {
         delay(100); // service delay
         TEST_ASSERT_TRUE_MESSAGE(init, "Wait for CO2 sensor!");
     }
+    
     TEST_ASSERT_TRUE_MESSAGE(scd30.isAvailable(), "CO2 sensor init error!");
+    TEST_ASSERT_TRUE_MESSAGE(scd30.getCarbonDioxideConcentration(co2data), "CO2 sensor read error!");
+    log_printf("CO2 co2: %f\n", co2data[0]);
+    log_printf("CO2 temp: %f\n", co2data[1]);
+    log_printf("CO2 hum: %f\n", co2data[2]);
+    
 }
 
 void runTests() {
     UNITY_BEGIN();
 
     RUN_TEST(test_string_concat);
-    Wire.begin(SDA, SCL, 20000);
-
-    //RUN_TEST(test_oxygen_sensor_init);
-    //RUN_TEST(test_oxygen_sensor_read_data);
-    //RUN_TEST(test_pressure_sensor_init);
-    //RUN_TEST(test_pressure_sensor_get_pressure);
-    //RUN_TEST(test_pressure_sensor_get_temp);
-    //RUN_TEST(test_barometric_sensor_read_data);
+    Wire.begin(SDA, SCL, 10000);
     RUN_TEST(test_co2_sensor_read_data);
+    RUN_TEST(test_oxygen_sensor_init);
+    RUN_TEST(test_oxygen_sensor_read_data);
+/*
+    RUN_TEST(test_pressure_sensor_init);
+    RUN_TEST(test_pressure_sensor_get_pressure);
+    RUN_TEST(test_pressure_sensor_get_temp);
+*/
+    //RUN_TEST(test_barometric_sensor_read_data);
 
     UNITY_END(); // stop unit testing
 

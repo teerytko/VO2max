@@ -75,17 +75,17 @@ class SCD30 {
     void stopMeasurement(void);
     void setTemperatureOffset(uint16_t offset);
 
-    void getCarbonDioxideConcentration(float* result);
+    bool getCarbonDioxideConcentration(float* result);
   private:
 
     uint8_t calculateCrc(uint8_t* data, uint8_t len);
 
-    boolean writeCommand(uint16_t command);
-    boolean writeCommandWithArguments(uint16_t command, uint16_t arguments);
+    bool writeCommand(uint16_t command);
+    bool writeCommandWithArguments(uint16_t command, uint16_t arguments);
     uint16_t readRegister(uint16_t address);
 
-    boolean writeBuffer(uint8_t* data, uint8_t len);
-    boolean readBuffer(uint8_t* data, uint8_t len);
+    bool writeBuffer(uint8_t* data, uint8_t len);
+    bool readBuffer(uint8_t* data, uint8_t len);
 
     uint8_t devAddr;
 
