@@ -2,14 +2,14 @@
 
 
 # build (cmd line)
-platformio.exe run -e lilygo-t-display
+platformio.exe run -e lilygo-vo2mini
 
 # build and upload (cmd line)
-platformio.exe run --target upload -e lilygo-t-display
+platformio.exe run --target upload -e lilygo-vo2mini
 
 # test
-platformio.exe test -e lilygo-t-display
+platformio.exe test -e lilygo-vo2mini
 
 
 # monitor / debug prints
-platformio.exe device monitor -e lilygo-t-display
+platformio.exe device monitor -e lilygo-vo2mini

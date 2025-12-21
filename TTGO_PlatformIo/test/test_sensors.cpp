@@ -9,6 +9,7 @@
 DFRobot_OxygenSensor Oxygen;
 Omron_D6FPH Pressure;
 #define Oxygen_IICAddress ADDRESS_3 // I2C  label for o2 address
+#define SENSOR_MODEL MODEL_0025AMD2  // Pressure sensor model
 String STR_TO_TEST;
 Adafruit_BMP280 bmp;
 
@@ -29,7 +30,7 @@ void test_string_concat(void) {
 }
 
 void test_pressure_sensor_init(void) {
-    bool init = Pressure.begin(MODEL_0025AD1);
+    bool init = Pressure.begin(SENSOR_MODEL);
     if (!init)
         Serial.print("Pressure sensor init error!\n");
     else
@@ -39,18 +40,20 @@ void test_pressure_sensor_init(void) {
 }
 
 void test_pressure_sensor_get_pressure(void) {
-    bool init = Pressure.begin(MODEL_0025AD1);
+    bool init = Pressure.begin(SENSOR_MODEL);
     TEST_ASSERT_TRUE_MESSAGE(init, "Pressure sensor init error!");
     float pressure = Pressure.getPressure();
     TEST_ASSERT_NOT_EQUAL_MESSAGE(pressure, 0, "Pressure pressure read invalid!");   
     Serial.print("pressure data: ");
-    Serial.print(pressure);
-    Serial.print("\n");
+    for (int i = 0; i < 100; i++) {
+        Serial.print(pressure);
+        Serial.print("\n");
+    }
 
 }
 
 void test_pressure_sensor_get_temp(void) {
-    bool init = Pressure.begin(MODEL_0025AD1);
+    bool init = Pressure.begin(SENSOR_MODEL);
     TEST_ASSERT_TRUE_MESSAGE(init, "Pressure sensor init error!");
     float temp = Pressure.getTemperature();
     TEST_ASSERT_NOT_EQUAL_MESSAGE(temp, 0, "Pressure temp read invalid!");   
@@ -123,11 +126,9 @@ void runTests() {
     RUN_TEST(test_co2_sensor_read_data);
     RUN_TEST(test_oxygen_sensor_init);
     RUN_TEST(test_oxygen_sensor_read_data);
-/*
     RUN_TEST(test_pressure_sensor_init);
     RUN_TEST(test_pressure_sensor_get_pressure);
     RUN_TEST(test_pressure_sensor_get_temp);
-*/
     //RUN_TEST(test_barometric_sensor_read_data);
 
     UNITY_END(); // stop unit testing

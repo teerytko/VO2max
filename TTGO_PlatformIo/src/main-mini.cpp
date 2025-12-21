@@ -15,7 +15,7 @@ Core Debug Level: None
 PSRAM: Disabled*/
 
 // Set this to the correct printed case venturi diameter
-#define DIAMETER 20
+#define DIAMETER 18
 
 #define VERBOSE // additional debug logging
 
@@ -31,6 +31,7 @@ int vref = 1100;
 #include <Wire.h>
 #include "DFRobot_OxygenSensor.h" //Library for Oxygen sensor
 #include "SCD30.h"                //Library for CO2 sensor
+#include "Omron_D6FPH.h"          //Library for differential pressure sensor
 
 // declarations for bluetooth serial --------------
 #include "BluetoothSerial.h"
@@ -85,6 +86,9 @@ class MyServerCallbacks : public BLEServerCallbacks
 // Starts Screen for TTGO device
 TFT_eSPI tft = TFT_eSPI(); // Invoke library, pins defined in User_Setup.h
 
+// Labels the pressure sensor
+Omron_D6FPH presSensor;
+
 // Label of oxygen sensor
 DFRobot_OxygenSensor Oxygen;
 #define COLLECT_NUMBER 10           // collect number, the collection range is 1-100.
@@ -115,6 +119,8 @@ float area_1 = 0.000531; // = 26mm diameter
 float area_2 = 0.000314; // = 20mm diameter
 #elif (DIAMETER == 19)
 float area_2 = 0.000284; // = 19mm diameter
+#elif (DIAMETER == 18)
+float area_2 = 0.000254; // = 18mm diameter
 #else // default
 float area_2 = 0.000201; // = 16mm diameter
 #endif
@@ -195,11 +201,13 @@ float Battery_Voltage = 0.0;
 uint16_t readVoltage();     // read battery voltage
 float readCO2();         // read CO2 sensor
 float readO2();         // read CO2 sensor
+float volumeCalc();         // (
+void vo2maxCalc();
 void CheckInitialCO2(); // check initial CO2 value
 void CheckInitialO2();  // check initial O2 value
-void showScreen(float o2, float co2, float respq);      // show screen on OLED
+void showScreen(float o2, float co2, float respq, float vol);      // show screen on OLED
 void ReadButtons();     // read buttons
-void tftScreen1(float o2, float co2, float respq);      // show screen 1 on TFT
+void tftScreen1(float o2, float co2, float respq, float vol);      // show screen 1 on TFT
 void tftParameters();   // show parameters on TFT
 void GetWeightkg();     // get weight from scale
 
@@ -328,7 +336,16 @@ void setup()
 
     CheckInitialO2();
     // Disable CO2 for now
-    // CheckInitialCO2();
+    CheckInitialCO2();
+    // init flow/pressure sensor Omron D6F-PF0025AD1 (or D6F-PF0025AD2) ----------
+    while (!presSensor.begin(MODEL_0025AMD2))
+    {
+        // Serial.println("Flow sensor error!");
+        tft.drawString("Flow-Sensor ERROR!", 0, 100, 4);
+    }
+    // Serial.println("Flow-Sensor I2c connect success!");
+    tft.drawString("Flow-Sensor ok", 0, 100, 4);
+    delay(2000);
 
 
     bpm = 30;  // initial test value
@@ -355,7 +372,7 @@ void setup()
 void loop()
 {
     TotalTime = millis() - TimerStart; // calculates actual total time
-
+    float vol = volumeCalc();
     // VO2max calculation, tft display and excel csv every 5s --------------
     if ((millis() - TimerVO2calc) > 5000 &&
         pressure < pressThreshold)
@@ -364,9 +381,10 @@ void loop()
         TimerVO2calc = millis(); // resets the timer
         float co2 = readCO2();
         float o2 = readO2();
-
-        /*if (TotalTime >= 10000)*/ {
-            showScreen(o2, co2, o2 / co2);
+        vo2maxCalc();
+        /*if (TotalTime >= 10000)*/
+        {
+            showScreen(o2, co2, respq, vol);
             readVoltage();
         }
         // send BLE data ----------------
@@ -555,14 +573,14 @@ float readCO2()
             co2percdiff = 0;
 
         // VCO2 calculation is based on changes in CO2 concentration (difference to baseline)
-        // vco2Total = volumeVEmean * rhoBTPS / rhoSTPD * co2percdiff * 10; // = vco2 in ml/min (* co2% * 10 for L in ml)
-        // vco2Max = vco2Total / settings.weightkg;                         // correction for wt
-        // respq = (vco2Total * 44) / (vo2Total * 32);                      // respiratory quotient based on molarity
+        vco2Total = volumeVEmean * rhoBTPS / rhoSTPD * co2percdiff * 10; // = vco2 in ml/min (* co2% * 10 for L in ml)
+        vco2Max = vco2Total / settings.weightkg;                         // correction for wt
+        respq = (vco2Total * 44) / (vo2Total * 32);                      // respiratory quotient based on molarity
         // CO2: 44g/mol, O2: 32 g/mol
-        // if (isnan(respq))
-        //     respq = 0; // correction for errors/div by 0
-        //if (respq > 1.5)
-        //    respq = 0;
+        if (isnan(respq))
+             respq = 0; // correction for errors/div by 0
+        if (respq > 1.5)
+            respq = 0;
 
 #ifdef VERBOSE
         Serial.print("Carbon Dioxide Concentration is: ");
@@ -574,20 +592,187 @@ float readCO2()
         Serial.print("Humidity = ");
         Serial.print(result[2]);
         Serial.println(" %");
+
+        Serial.print("vco2Total = ");
+        Serial.print(vco2Total);
+        Serial.println(" ml/min");
+
+        Serial.print("vco2Max = ");
+        Serial.print(vco2Max);
+        Serial.println(" ml/min/kg");
+
+        Serial.print("respq = ");
+        Serial.print(respq);
+        Serial.println(" ml/min/kg");
+
 #endif
     }
     return result[0];
 }
 
+float volumeCalc()
+{
+#ifdef VERBOSE
+    //Serial.print("TeemuR: VolumeCalc\n");
+#endif
+    // Read pressure from Omron D6F PH0025AD1 (or D6F PH0025AD2)
+    float pressureraw = presSensor.getPressure();
+    pressure = pressure / 2 + pressureraw / 2;
+
+#if 0
+    Serial.print("\nTeemuR: pressure: ");
+    Serial.print(pressure);
+    Serial.print("\n");
+#endif
+
+    if (isnan(pressure))
+    { // isnan = is not a number,  unvalid sensor data
+        tft.fillScreen(TFT_RED);
+        tft.setTextColor(TFT_WHITE, TFT_RED);
+        tft.drawCentreString("VENTURI ERROR!", 120, 55, 4);
+    }
+    if (pressure > 266)
+    { // upper limit of flow sensor warning
+        // tft.fillScreen(TFT_RED);
+        tft.setTextColor(TFT_WHITE, TFT_RED);
+        tft.drawCentreString("SENSOR LIMIT!", 120, 55, 4);
+    }
+    if (pressure < 0)
+        pressure = 0;
+
+
+    if (pressure < pressThreshold && readVE == 1)
+    {
+        // read volumeVE
+        readVE = 0;
+        DurationVE = millis() - TimerVE;
+        TimerVE = millis(); // start timerVE
+        volumeExp = volumeTotal;
+        volumeTotal = 0; // resets volume for next breath
+        volumeVE = volumeExp / DurationVE * 60;
+        volumeExp = volumeExp / 1000;
+        volumeVEmean = (volumeVEmean * 3 / 4) + (volumeVE / 4); // running mean of one minute volume (VE)
+        if (volumeVEmean < 1)
+            volumeVEmean = 0;
+        freqVE = 60000 / DurationVE;
+        if (volumeVE < 0.1)
+            freqVE = 0;
+        freqVEmean = (freqVEmean * 3 / 4) + (freqVE / 4);
+        if (freqVEmean < 1)
+            freqVEmean = 0;
+
+#if 1
+        Serial.print("volumeExp: ");
+        Serial.print(volumeExp);
+        Serial.print("   VE: ");
+        Serial.print(volumeVE);
+        Serial.print("   VEmean: ");
+        Serial.print(volumeVEmean);
+        Serial.print("   freqVE: ");
+        Serial.print(freqVE, 1);
+        Serial.print("   freqVEmean: ");
+        Serial.println(freqVEmean, 1);
+#endif
+    }
+    if (millis() - TimerVE > 5000)
+        readVE = 1; // readVE at least every 5s
+
+    if (pressure >= pressThreshold)
+    { // ongoing integral of volumeTotal
+#if 0
+    Serial.print("\nTeemuR: volumeTotal: ");
+    Serial.print(volumeTotal);
+    Serial.print("\n");
+#endif
+
+        if (volumeTotal > 50)
+            readVE = 1;
+//        Serial.print("TeemuR: rho = ");
+//        Serial.print(rho);
+//        Serial.println("\n");
+
+        massFlow = 1000 * sqrt((abs(pressure) * 2 * rho) / ((1 / (pow(area_2, 2))) - (1 / (pow(area_1, 2))))); // Bernoulli equation
+        volFlow = massFlow / rho;                                                                              // volumetric flow of air
+        volFlow = volFlow * settings.correctionSensor;                                                         // correction of sensor calculations
+        volumeTotal = volFlow * (millis() - TimerVolCalc) + volumeTotal;
+        volumeTotal2 = volFlow * (millis() - TimerVolCalc) + volumeTotal2;
+    }
+    else if ((volumeTotal2 - volumeTotalOld) > 200)
+    { // calculate actual expiratory volume
+        expiratVol = (volumeTotal2 - volumeTotalOld) / 1000;
+        volumeTotalOld = volumeTotal2;
+    }
+    return expiratVol;
+}
+
+void AirDensity()
+{
+    //co2temp = result[1];
+    //co2hum = result[2];
+
+    TempC = co2temp; // bmp.readTemperature(); // Temp from baro sensor BM280
+    //Serial.print("TeemuR: AirDensity TempC = ");
+    //Serial.print(TempC);
+    //Serial.println("\n");
+
+    // co2temp is temperature from CO2 sensor
+    // PresPa = bmp.readPressure();
+    //Serial.print("TeemuR: AirDensity co2temp = ");
+    //Serial.print(co2temp);
+    //Serial.println("\n");
+    rho = PresPa / (co2temp + 273.15) / 287.058; // calculation of air density
+    rhoBTPS = PresPa / (35 + 273.15) / 292.9;    // density at BTPS: 35°C, 95% humidity
+
+    //Serial.print("TeemuR: AirDensity rho = ");
+    //Serial.print(rho);
+    //Serial.println("\n");
+}
+
+void vo2maxCalc()
+{
+    // V02max calculation every 5s
+    AirDensity(); // calculates air density
+
+#ifdef VERBOSE
+    // Debug. compare co2
+    Serial.print("Calc co2 ");
+    Serial.print(initialO2 - lastO2);
+    Serial.print(" sens co2 ");
+    Serial.println(co2perc);
+#endif
+
+    co2 = initialO2 - lastO2; // calculated level of CO2 based on Oxygen level loss
+    if (co2 < 0)
+        co2 = 0; // correction for sensor drift
+
+    vo2Total = volumeVEmean * rhoBTPS / rhoSTPD * co2 * 10; // = vo2 in ml/min (* co2% * 10 for L in ml)
+    vo2Max = vo2Total / settings.weightkg;                  // correction for wt
+    if (vo2Max > vo2MaxMax)
+        vo2MaxMax = vo2Max;
+
+    vo2Cal = vo2Total / 1000 * 4.86;                     // vo2Max liters/min * 4.86 Kcal/liter = kcal/min
+    calTotal = calTotal + vo2Cal * TimerVO2diff / 60000; // integral function of calories
+    vo2CalH = vo2Cal * 60.0;                             // actual calories/min. * 60 min. = cal./hour
+    vo2CalDay = vo2Cal * 1440.0;                         // actual calories/min. * 1440 min. = cal./day
+    if (vo2CalDay > vo2CalDayMax)
+        vo2CalDayMax = vo2CalDay;
+    Serial.print("Calc vo2Max ");
+    Serial.print(vo2Max);
+    Serial.print(" sens vo2Total ");
+    Serial.println(vo2Total);
+
+}
+
 //--------------------------------------------------
-void showScreen(float o2, float co2, float respq)
-{ // select active screen
+void showScreen(float o2, float co2, float respq, float vol)
+{
+    // select active screen
     ConvertTime(TotalTime);
     tft.setRotation(1);
     switch (screenNr)
     {
     case 1:
-        tftScreen1(o2, co2, respq);
+        tftScreen1(o2, co2, respq, vol);
         break;
     case 6:
         tftParameters();
@@ -600,7 +785,7 @@ void showScreen(float o2, float co2, float respq)
 }
 
 //--------------------------------------------------------
-void tftScreen1(float o2, float co2, float respq)
+void tftScreen1(float o2, float co2, float respq, float vol)
 {
     tft.fillScreen(TFT_BLACK);
     tft.setTextColor(TFT_GREEN, TFT_BLACK);
@@ -617,15 +802,20 @@ void tftScreen1(float o2, float co2, float respq)
     tft.setCursor(120, 30, 4);
     tft.println(o2);
 
-    tft.setCursor(5, 80, 4);
+    tft.setCursor(5, 55, 4);
     tft.print("VCO2 ");
-    tft.setCursor(120, 80, 4);
+    tft.setCursor(120, 55, 4);
     tft.println(co2);
 
-    tft.setCursor(5, 105, 4);
+    tft.setCursor(5, 80, 4);
     tft.print("RQ ");
-    tft.setCursor(120, 105, 4);
+    tft.setCursor(120, 80, 4);
     tft.println(respq);
+
+    tft.setCursor(5, 105, 4);
+    tft.print("Vol ");
+    tft.setCursor(120, 105, 4);
+    tft.println(vol, 3);
 }
 
 //--------------------------------------------------------

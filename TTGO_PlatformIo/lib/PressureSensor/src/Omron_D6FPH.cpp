@@ -27,6 +27,8 @@ void Omron_D6FPH::setSensorModel(sensorModels sensorModel){
     switch (_sensorModel)
     {
     case MODEL_0025AD1:
+    case MODEL_0025AD2:
+    case MODEL_0025AMD2:
         _rangeMode = 250;
         _rangeModeMulVal = 1;
         _rangeModeSubVal = 0;
