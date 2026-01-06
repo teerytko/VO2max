@@ -83,6 +83,11 @@ class MyServerCallbacks : public BLEServerCallbacks
 
 // ------------------------------------------
 
+// BLE server and JSON characteristic for telemetry
+BLEServer *pBLEServer;
+BLEService *pBLEService;
+BLECharacteristic *jsonCharacteristic; // JSON formatted: {"vo2":..,"vco2":..,"rq":..}
+
 // Starts Screen for TTGO device
 TFT_eSPI tft = TFT_eSPI(); // Invoke library, pins defined in User_Setup.h
 
@@ -167,7 +172,7 @@ float DurationVE = 0.0;
 
 float lastO2 = 0;
 float initialO2 = 0;
-float co2 = 0;
+float consumed_o2 = 0;
 float calTotal = 0;
 float vo2Cal = 0;
 float vo2CalH = 0;        // calories per hour
@@ -196,7 +201,14 @@ float TempC = 15.0;    // Air temperature in Celsius barometric sensor BMP180
 float PresPa = 101325; // uncorrected (absolute) barometric pressure
 
 float Battery_Voltage = 0.0;
-
+enum ventilationStates
+{
+    WAITING_PRESSURE,
+    INSPIRATION,
+    EXPIRATION,
+    EXPIRATION_DONE
+};
+int ventilationState = WAITING_PRESSURE;
 // Forward declarations
 uint16_t readVoltage();     // read battery voltage
 float readCO2();         // read CO2 sensor
@@ -314,6 +326,19 @@ void setup()
         tft.drawString("BT ready", 0, 25, 4);
     }
 
+    // Initialize BLE (GATT) server and a single JSON characteristic for telemetry
+    BLEDevice::init("VO2max_BLE");
+    pBLEServer = BLEDevice::createServer();
+    pBLEServer->setCallbacks(new MyServerCallbacks());
+    pBLEService = pBLEServer->createService("12345678-1234-5678-1234-56789abcdef0");
+    jsonCharacteristic = pBLEService->createCharacteristic("12345678-1234-5678-1234-56789abcdef4", BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+    jsonCharacteristic->addDescriptor(new BLE2902());
+    pBLEService->start();
+    BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+    pAdvertising->addServiceUUID(pBLEService->getUUID());
+    pAdvertising->start();
+    tft.drawString("BLE ok", 0, 50, 4);
+
     // init O2 sensor DF-Robot -----------
     if (!Oxygen.begin(Oxygen_IICAddress))
     {
@@ -374,9 +399,11 @@ void loop()
     TotalTime = millis() - TimerStart; // calculates actual total time
     float vol = volumeCalc();
     // VO2max calculation, tft display and excel csv every 5s --------------
-    if ((millis() - TimerVO2calc) > 5000 &&
-        pressure < pressThreshold)
+    if (//(millis() - TimerVO2calc) > 5000 && pressure < pressThreshold) 
+        ventilationState == EXPIRATION_DONE
+    )
     { // calls vo2maxCalc() for calculation Vo2Max every 5 seconds.
+        ventilationState = INSPIRATION;
         TimerVO2diff = millis() - TimerVO2calc;
         TimerVO2calc = millis(); // resets the timer
         float co2 = readCO2();
@@ -397,6 +424,17 @@ void loop()
         heart[2] = energyUsed - (heart[3] * 256);
         delay(100);
 
+        // Publish JSON telemetry via BLE (if a client connected)
+        if (_BLEClientConnected && jsonCharacteristic)
+        {
+            String payload = "{";
+            payload += "\"vo2\":" + String(vo2Max, 2);
+            payload += ",\"vco2\":" + String(vco2Max, 2);
+            payload += ",\"rq\":" + String(respq, 2);
+            payload += "}";
+            jsonCharacteristic->setValue(payload.c_str());
+            jsonCharacteristic->notify();
+        }
     }
 
     if (millis() - Timer1min > 30000)
@@ -597,6 +635,10 @@ float readCO2()
         Serial.print(vco2Total);
         Serial.println(" ml/min");
 
+        Serial.print("vo2Total = ");
+        Serial.print(vo2Total);
+        Serial.println(" ?");
+
         Serial.print("vco2Max = ");
         Serial.print(vco2Max);
         Serial.println(" ml/min/kg");
@@ -643,6 +685,11 @@ float volumeCalc()
 
     if (pressure < pressThreshold && readVE == 1)
     {
+        if (ventilationState == EXPIRATION)
+        {
+            Serial.print("TeemuR EXPIRATION DONE\n");
+            ventilationState = EXPIRATION_DONE;
+        }
         // read volumeVE
         readVE = 0;
         DurationVE = millis() - TimerVE;
@@ -679,11 +726,12 @@ float volumeCalc()
 
     if (pressure >= pressThreshold)
     { // ongoing integral of volumeTotal
-#if 0
-    Serial.print("\nTeemuR: volumeTotal: ");
+#if 1
+    Serial.print("\nTeemuR EXPIRATION: volumeTotal: ");
     Serial.print(volumeTotal);
     Serial.print("\n");
 #endif
+        ventilationState = EXPIRATION;
 
         if (volumeTotal > 50)
             readVE = 1;
@@ -735,17 +783,21 @@ void vo2maxCalc()
 
 #ifdef VERBOSE
     // Debug. compare co2
-    Serial.print("Calc co2 ");
-    Serial.print(initialO2 - lastO2);
-    Serial.print(" sens co2 ");
+    Serial.print("\ninitialO2 ");
+    Serial.print(initialO2);
+    Serial.print("\nlastO2 ");
+    Serial.print(lastO2);
+    Serial.print("\nsens co2 ");
     Serial.println(co2perc);
 #endif
 
-    co2 = initialO2 - lastO2; // calculated level of CO2 based on Oxygen level loss
-    if (co2 < 0)
-        co2 = 0; // correction for sensor drift
+    consumed_o2 = initialO2 - lastO2; // calculated level of consumed O2 based on Oxygen level loss
+    if (consumed_o2 < 0)
+        consumed_o2 = 0; // correction for sensor drift
 
-    vo2Total = volumeVEmean * rhoBTPS / rhoSTPD * co2 * 10; // = vo2 in ml/min (* co2% * 10 for L in ml)
+    float vo2TotalIn = volumeVEmean * rhoBTPS / rhoSTPD * initialO2 / 100; // = vo2 in ml/min (* consumed_o2% * 10 for L in ml)
+    float vo2TotalOut = volumeVEmean * rhoBTPS / rhoSTPD * lastO2 / 100; // = vo2 in ml/min (* consumed_o2% * 10 for L in ml)
+    vo2Total = volumeVEmean * rhoBTPS / rhoSTPD * consumed_o2 * 10; // = vo2 in ml/min (* consumed_o2% * 10 for L in ml)
     vo2Max = vo2Total / settings.weightkg;                  // correction for wt
     if (vo2Max > vo2MaxMax)
         vo2MaxMax = vo2Max;
@@ -756,10 +808,14 @@ void vo2maxCalc()
     vo2CalDay = vo2Cal * 1440.0;                         // actual calories/min. * 1440 min. = cal./day
     if (vo2CalDay > vo2CalDayMax)
         vo2CalDayMax = vo2CalDay;
-    Serial.print("Calc vo2Max ");
-    Serial.print(vo2Max);
-    Serial.print(" sens vo2Total ");
-    Serial.println(vo2Total);
+    Serial.print("\nCalc volumeVEmean");
+    Serial.print(volumeVEmean);
+    Serial.print("\nCalc vo2Total from o2 ");
+    Serial.print(vo2Total);
+    Serial.print("\nCalc vo2TotalIn ");
+    Serial.print(vo2TotalIn);
+    Serial.print("\nCalc vo2TotalOut ");
+    Serial.println(vo2TotalOut);
 
 }
 
