@@ -46,33 +46,16 @@ BluetoothSerial SerialBT;
 #include <BLEServer.h>
 #include <BLEUtils.h>
 
-const String Version = "V2.2 2023/01/23";
+const String Version = "V2.3 2026/02/07";
 
-byte bpm;
-
-byte heart[8] = {0b00001110, 60, 0, 0, 0, 0, 0, 0}; // defines the BT heartrate characteristic
-
-// Byte[0]: flags: 0b00001110:
-// not used/n.u./n.u./RR value available/Energy val.av./
-// Sensor contact status/Sens.cont.supported/HR Format: (0: uint_8)
-// Byte[1]: HR (uint_8)
-// Byte[2]: Energy in J MSB
-// Byte[3]: Energy in J LSB
-// Byte[4]: RR
-// Byte[5]: RR
-// Byte[6]: ?
-// Byte[7]: ?
-
-byte hrmPos[1] = {2};
+// Service UUID
+const char VO2MAX_SERVICE_UUID[] = "12345678-1234-5678-1234-56789abcdef0";
+// Separate Characteristic UUIDs
+const char VO2_CHAR_UUID[] = "12345678-1234-5678-1234-56789abcdef1";
+const char VCO2_CHAR_UUID[] = "12345678-1234-5678-1234-56789abcdef2";
+const char RQ_CHAR_UUID[] = "12345678-1234-5678-1234-56789abcdef3";
 
 bool _BLEClientConnected = false;
-
-// heart rate service
-#define heartRateService BLEUUID((uint16_t)0x180D)
-BLECharacteristic heartRateMeasurementCharacteristics(BLEUUID((uint16_t)0x2A37), BLECharacteristic::PROPERTY_NOTIFY);
-BLECharacteristic sensorPositionCharacteristic(BLEUUID((uint16_t)0x2A38), BLECharacteristic::PROPERTY_READ);
-BLEDescriptor heartRateDescriptor(BLEUUID((uint16_t)0x2901));
-BLEDescriptor sensorPositionDescriptor(BLEUUID((uint16_t)0x2901)); // 0x2901: Characteristic User Description
 
 class MyServerCallbacks : public BLEServerCallbacks
 {
@@ -86,7 +69,9 @@ class MyServerCallbacks : public BLEServerCallbacks
 // BLE server and JSON characteristic for telemetry
 BLEServer *pBLEServer;
 BLEService *pBLEService;
-BLECharacteristic *jsonCharacteristic; // JSON formatted: {"vo2":..,"vco2":..,"rq":..}
+BLECharacteristic *vo2Characteristic; // raw value of VO2 in ml/min
+BLECharacteristic *vco2Characteristic; // raw value of VCO2 in ml/min
+BLECharacteristic *rqCharacteristic; // raw value of RQ in mol VCO2 / mol VO2
 
 // Starts Screen for TTGO device
 TFT_eSPI tft = TFT_eSPI(); // Invoke library, pins defined in User_Setup.h
@@ -330,9 +315,13 @@ void setup()
     BLEDevice::init("VO2max_BLE");
     pBLEServer = BLEDevice::createServer();
     pBLEServer->setCallbacks(new MyServerCallbacks());
-    pBLEService = pBLEServer->createService("12345678-1234-5678-1234-56789abcdef0");
-    jsonCharacteristic = pBLEService->createCharacteristic("12345678-1234-5678-1234-56789abcdef4", BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
-    jsonCharacteristic->addDescriptor(new BLE2902());
+    pBLEService = pBLEServer->createService(VO2MAX_SERVICE_UUID);
+    vo2Characteristic = pBLEService->createCharacteristic(VO2_CHAR_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+    vo2Characteristic->addDescriptor(new BLE2902());
+    vco2Characteristic = pBLEService->createCharacteristic(VCO2_CHAR_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+    // vco2Characteristic->addDescriptor(new BLE2902());
+    rqCharacteristic = pBLEService->createCharacteristic(RQ_CHAR_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+    // rqCharacteristic->addDescriptor(new BLE2902());
     pBLEService->start();
     BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
     pAdvertising->addServiceUUID(pBLEService->getUUID());
@@ -372,9 +361,6 @@ void setup()
     tft.drawString("Flow-Sensor ok", 0, 100, 4);
     delay(2000);
 
-
-    bpm = 30;  // initial test value
-
     tft.fillScreen(TFT_BLACK);
     tft.setTextColor(TFT_GREEN, TFT_BLACK);
 
@@ -399,6 +385,12 @@ void loop()
     TotalTime = millis() - TimerStart; // calculates actual total time
     float vol = volumeCalc();
     // VO2max calculation, tft display and excel csv every 5s --------------
+    if (ventilationState == INSPIRATION) {
+        float o2 = readO2();
+        float co2 = readCO2();
+        //showScreen(o2, co2, respq, vol);
+        delay(100);
+    }
     if (//(millis() - TimerVO2calc) > 5000 && pressure < pressThreshold) 
         ventilationState == EXPIRATION_DONE
     )
@@ -408,6 +400,23 @@ void loop()
         TimerVO2calc = millis(); // resets the timer
         float co2 = readCO2();
         float o2 = readO2();
+        Serial.print("vco2Total = ");
+        Serial.print(vco2Total);
+        Serial.println(" ml/min");
+
+        Serial.print("vo2Total = ");
+        Serial.print(vo2Total);
+        Serial.println(" ?");
+
+        Serial.print("vco2Max = ");
+        Serial.print(vco2Max);
+        Serial.println(" ml/min/kg");
+
+        Serial.print("respq = ");
+        Serial.print(respq);
+        Serial.println(" ml/min/kg");
+
+
         vo2maxCalc();
         /*if (TotalTime >= 10000)*/
         {
@@ -415,25 +424,21 @@ void loop()
             readVoltage();
         }
         // send BLE data ----------------
-
-        bpm = int(vo2Max + 0.5);
-        heart[1] = (byte)bpm;
-
-        int energyUsed = calTotal * 4.184; // conversion kcal into kJ
-        heart[3] = energyUsed / 256;
-        heart[2] = energyUsed - (heart[3] * 256);
-        delay(100);
-
         // Publish JSON telemetry via BLE (if a client connected)
-        if (_BLEClientConnected && jsonCharacteristic)
+        if (_BLEClientConnected)
         {
-            String payload = "{";
-            payload += "\"vo2\":" + String(vo2Max, 2);
-            payload += ",\"vco2\":" + String(vco2Max, 2);
-            payload += ",\"rq\":" + String(respq, 2);
-            payload += "}";
-            jsonCharacteristic->setValue(payload.c_str());
-            jsonCharacteristic->notify();
+            if (vo2Characteristic) {
+                vo2Characteristic->setValue(vo2Max);
+                vo2Characteristic->notify();
+            }
+            if (vco2Characteristic) {
+                vco2Characteristic->setValue(vco2Max);
+                vco2Characteristic->notify();
+            }
+            if (rqCharacteristic) {
+                rqCharacteristic->setValue(respq);
+                rqCharacteristic->notify();
+            }
         }
     }
 
@@ -576,7 +581,13 @@ float readO2()
         initialO2 = lastO2; // correction for drift of O2 sensor
 
     if (DEMO == 1)
-        lastO2 = initialO2 - 4; // TEST+++++++++++++++++++++++++++++++++++++++++++++
+        lastO2 = initialO2 - 4;
+#ifdef VERBOSE
+        Serial.print("O2: ");
+        Serial.print(lastO2);
+        Serial.print("\n");
+#endif
+    
     return lastO2;
 }
 
@@ -621,32 +632,17 @@ float readCO2()
             respq = 0;
 
 #ifdef VERBOSE
-        Serial.print("Carbon Dioxide Concentration is: ");
+        Serial.print("Initial CO2: ");
+        Serial.print(initialCO2);
+        Serial.print("CO2: ");
         Serial.print(result[0]);
-        Serial.println(" ppm");
-        Serial.print("Temperature = ");
+        Serial.print(" ppm ");
+        // Serial.print("Temperature = ");
         Serial.print(result[1]);
-        Serial.println(" ℃");
-        Serial.print("Humidity = ");
+        Serial.print(" ℃");
+        // Serial.print("Humidity = ");
         Serial.print(result[2]);
         Serial.println(" %");
-
-        Serial.print("vco2Total = ");
-        Serial.print(vco2Total);
-        Serial.println(" ml/min");
-
-        Serial.print("vo2Total = ");
-        Serial.print(vo2Total);
-        Serial.println(" ?");
-
-        Serial.print("vco2Max = ");
-        Serial.print(vco2Max);
-        Serial.println(" ml/min/kg");
-
-        Serial.print("respq = ");
-        Serial.print(respq);
-        Serial.println(" ml/min/kg");
-
 #endif
     }
     return result[0];
@@ -721,8 +717,8 @@ float volumeCalc()
         Serial.println(freqVEmean, 1);
 #endif
     }
-    if (millis() - TimerVE > 5000)
-        readVE = 1; // readVE at least every 5s
+    //if (millis() - TimerVE > 5000)
+    //    readVE = 1; // readVE at least every 5s
 
     if (pressure >= pressThreshold)
     { // ongoing integral of volumeTotal
