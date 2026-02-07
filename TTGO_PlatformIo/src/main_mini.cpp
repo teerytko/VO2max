@@ -17,7 +17,7 @@ PSRAM: Disabled*/
 // Set this to the correct printed case venturi diameter
 #define DIAMETER 18
 
-#define VERBOSE // additional debug logging
+#undef VERBOSE // additional debug logging
 
 #include <Arduino.h>
 #include "esp_adc_cal.h" // ADC calibration data
@@ -32,46 +32,7 @@ int vref = 1100;
 #include "DFRobot_OxygenSensor.h" //Library for Oxygen sensor
 #include "SCD30.h"                //Library for CO2 sensor
 #include "Omron_D6FPH.h"          //Library for differential pressure sensor
-
-// declarations for bluetooth serial --------------
-#include "BluetoothSerial.h"
-#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
-#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
-#endif
-BluetoothSerial SerialBT;
-
-// declarations for BLE ---------------------
-#include <BLE2902.h> // used for notifications 0x2902: Client Characteristic Configuration
-#include <BLEDevice.h>
-#include <BLEServer.h>
-#include <BLEUtils.h>
-
-const String Version = "V2.3 2026/02/07";
-
-// Service UUID
-const char VO2MAX_SERVICE_UUID[] = "12345678-1234-5678-1234-56789abcdef0";
-// Separate Characteristic UUIDs
-const char VO2_CHAR_UUID[] = "12345678-1234-5678-1234-56789abcdef1";
-const char VCO2_CHAR_UUID[] = "12345678-1234-5678-1234-56789abcdef2";
-const char RQ_CHAR_UUID[] = "12345678-1234-5678-1234-56789abcdef3";
-
-bool _BLEClientConnected = false;
-
-class MyServerCallbacks : public BLEServerCallbacks
-{
-    void onConnect(BLEServer *pServer) { _BLEClientConnected = true; };
-
-    void onDisconnect(BLEServer *pServer) { _BLEClientConnected = false; }
-};
-
-// ------------------------------------------
-
-// BLE server and JSON characteristic for telemetry
-BLEServer *pBLEServer;
-BLEService *pBLEService;
-BLECharacteristic *vo2Characteristic; // raw value of VO2 in ml/min
-BLECharacteristic *vco2Characteristic; // raw value of VCO2 in ml/min
-BLECharacteristic *rqCharacteristic; // raw value of RQ in mol VCO2 / mol VO2
+#include "vo2_ble_service.h"          //Library for differential pressure sensor
 
 // Starts Screen for TTGO device
 TFT_eSPI tft = TFT_eSPI(); // Invoke library, pins defined in User_Setup.h
@@ -83,6 +44,7 @@ Omron_D6FPH presSensor;
 DFRobot_OxygenSensor Oxygen;
 #define COLLECT_NUMBER 10           // collect number, the collection range is 1-100.
 #define Oxygen_IICAddress ADDRESS_3 // I2C  label for o2 address
+const String Version = "V2.3 2026/02/07";
 
 // Defines button state for adding wt
 const int buttonPin1 = 0;
@@ -154,7 +116,6 @@ String TotalTimeMin = String("00:00");
 int readVE = 0;
 float TimerVE = 0.0;
 float DurationVE = 0.0;
-
 float lastO2 = 0;
 float initialO2 = 0;
 float consumed_o2 = 0;
@@ -166,7 +127,6 @@ float vo2CalDayMax = 0.0; // highest value of calories per day
 float vo2Max = 0;         // value of vo2Max/min/kg, calculated every 30 seconds
 float vo2Total = 0.0;     // value of total vo2Max/min
 float vo2MaxMax = 0;      // Best value of vo2 max for whole time machine is on
-
 float respq = 0.0;      // respiratory quotient in mol VCO2 / mol VO2
 float co2ppm = 0.0;     // CO2 sensor in ppm
 float co2perc = 0.0;    // = CO2ppm /10000
@@ -175,17 +135,17 @@ float vco2Total = 0.0;
 float vco2Max = 0.0;
 float co2temp = 0.0; // temperature CO2 sensor
 float co2hum = 0.0;  // humidity CO2 sensor (not used in calculations)
-
 float freqVE = 0.0;     // ventilation frequency
 float freqVEmean = 0.0; // mean ventilation frequency
-
 float expiratVol = 0.0; // last expiratory volume in L
 float volumeTotalOld = 0.0;
 float volumeTotal2 = 0.0;
 float TempC = 15.0;    // Air temperature in Celsius barometric sensor BMP180
 float PresPa = 101325; // uncorrected (absolute) barometric pressure
-
 float Battery_Voltage = 0.0;
+// if ble
+VO2BleServer bleServer;
+
 enum ventilationStates
 {
     WAITING_PRESSURE,
@@ -300,33 +260,16 @@ void setup()
     {
         tft.drawString("Serial ok", 0, 0, 4);
     }
-
-    // init serial bluetooth -----------
-    if (!SerialBT.begin("VO2max"))
-    { // Start Bluetooth with device name
-        tft.drawString("BT NOT ready!", 0, 25, 4);
+    
+    // 
+    if (bleServer.initialize())
+    {
+        tft.drawString("BLE init ok", 0, 25, 4);
     }
     else
     {
-        tft.drawString("BT ready", 0, 25, 4);
+        tft.drawString("BLE init ERROR!", 0, 25, 4);
     }
-
-    // Initialize BLE (GATT) server and a single JSON characteristic for telemetry
-    BLEDevice::init("VO2max_BLE");
-    pBLEServer = BLEDevice::createServer();
-    pBLEServer->setCallbacks(new MyServerCallbacks());
-    pBLEService = pBLEServer->createService(VO2MAX_SERVICE_UUID);
-    vo2Characteristic = pBLEService->createCharacteristic(VO2_CHAR_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
-    vo2Characteristic->addDescriptor(new BLE2902());
-    vco2Characteristic = pBLEService->createCharacteristic(VCO2_CHAR_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
-    // vco2Characteristic->addDescriptor(new BLE2902());
-    rqCharacteristic = pBLEService->createCharacteristic(RQ_CHAR_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
-    // rqCharacteristic->addDescriptor(new BLE2902());
-    pBLEService->start();
-    BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
-    pAdvertising->addServiceUUID(pBLEService->getUUID());
-    pAdvertising->start();
-    tft.drawString("BLE ok", 0, 50, 4);
 
     // init O2 sensor DF-Robot -----------
     if (!Oxygen.begin(Oxygen_IICAddress))
@@ -400,22 +343,14 @@ void loop()
         TimerVO2calc = millis(); // resets the timer
         float co2 = readCO2();
         float o2 = readO2();
-        Serial.print("vco2Total = ");
+        Serial.print("{ \"vco2\": {");
+        Serial.print("\"vco2Total\": ");
         Serial.print(vco2Total);
-        Serial.println(" ml/min");
-
-        Serial.print("vo2Total = ");
-        Serial.print(vo2Total);
-        Serial.println(" ?");
-
-        Serial.print("vco2Max = ");
+        Serial.print(", \"vco2Max\": ");
         Serial.print(vco2Max);
-        Serial.println(" ml/min/kg");
-
-        Serial.print("respq = ");
+        Serial.print(", \"respq\": ");
         Serial.print(respq);
-        Serial.println(" ml/min/kg");
-
+        Serial.println("}}");
 
         vo2maxCalc();
         /*if (TotalTime >= 10000)*/
@@ -425,20 +360,11 @@ void loop()
         }
         // send BLE data ----------------
         // Publish JSON telemetry via BLE (if a client connected)
-        if (_BLEClientConnected)
+        if (bleServer.isClientConnected())
         {
-            if (vo2Characteristic) {
-                vo2Characteristic->setValue(vo2Max);
-                vo2Characteristic->notify();
-            }
-            if (vco2Characteristic) {
-                vco2Characteristic->setValue(vco2Max);
-                vco2Characteristic->notify();
-            }
-            if (rqCharacteristic) {
-                rqCharacteristic->setValue(respq);
-                rqCharacteristic->notify();
-            }
+            bleServer.pushVO2Data(vo2Max);
+            bleServer.pushVCO2Data(vco2Max);
+            bleServer.pushRQData(respq);
         }
     }
 
@@ -536,7 +462,7 @@ void CheckInitialCO2()
 
 //--------------------------------------------------
 
-void ConvertTime(float ms)
+String ConvertTime(float ms)
 {
     long inms = long(ms);
     int h, m, s;
@@ -554,22 +480,7 @@ void ConvertTime(float ms)
     if (h < 10)
         strh = String("0") + strh;
     TotalTimeMin = String(strh) + String(":") + String(strm) + String(":") + String(strs);
-}
-
-//--------------------------------------------------
-void BatteryBT()
-{
-    // HeaderStreamedBT = 1;// TEST: Deactivation of header
-    if (HeaderStreamedBT == 0)
-    {
-        SerialBT.print("Time");
-        SerialBT.print(",");
-        SerialBT.println("Voltage");
-        HeaderStreamedBT = 1;
-    }
-    SerialBT.print(float(TotalTime / 1000), 0);
-    SerialBT.print(",");
-    SerialBT.println(Battery_Voltage);
+    return TotalTimeMin;
 }
 
 //--------------------------------------------------
@@ -683,7 +594,10 @@ float volumeCalc()
     {
         if (ventilationState == EXPIRATION)
         {
-            Serial.print("TeemuR EXPIRATION DONE\n");
+            Serial.print("{ \"event\": \"EXPIRATION DONE\", \"time\": ");
+            Serial.print(ConvertTime(TotalTime));
+            Serial.println("}");
+
             ventilationState = EXPIRATION_DONE;
         }
         // read volumeVE
@@ -705,16 +619,19 @@ float volumeCalc()
             freqVEmean = 0;
 
 #if 1
-        Serial.print("volumeExp: ");
+        Serial.print("{ \"volume\": {");
+        Serial.print("\"volumeExp\": ");
         Serial.print(volumeExp);
-        Serial.print("   VE: ");
+        Serial.print(", \"VE\": ");
         Serial.print(volumeVE);
-        Serial.print("   VEmean: ");
+        Serial.print(", \"VEmean\": ");
         Serial.print(volumeVEmean);
-        Serial.print("   freqVE: ");
+        Serial.print(", \"freqVE\": ");
         Serial.print(freqVE, 1);
-        Serial.print("   freqVEmean: ");
-        Serial.println(freqVEmean, 1);
+        Serial.print(", \"freqVEmean\": ");
+        Serial.print(freqVEmean, 1);
+        Serial.println("}}");
+        
 #endif
     }
     //if (millis() - TimerVE > 5000)
@@ -722,7 +639,7 @@ float volumeCalc()
 
     if (pressure >= pressThreshold)
     { // ongoing integral of volumeTotal
-#if 1
+#if 0
     Serial.print("\nTeemuR EXPIRATION: volumeTotal: ");
     Serial.print(volumeTotal);
     Serial.print("\n");
@@ -793,7 +710,7 @@ void vo2maxCalc()
 
     float vo2TotalIn = volumeVEmean * rhoBTPS / rhoSTPD * initialO2 / 100; // = vo2 in ml/min (* consumed_o2% * 10 for L in ml)
     float vo2TotalOut = volumeVEmean * rhoBTPS / rhoSTPD * lastO2 / 100; // = vo2 in ml/min (* consumed_o2% * 10 for L in ml)
-    vo2Total = volumeVEmean * rhoBTPS / rhoSTPD * consumed_o2 * 10; // = vo2 in ml/min (* consumed_o2% * 10 for L in ml)
+    vo2Total = volumeVEmean * rhoBTPS / rhoSTPD * consumed_o2 * 1; // = vo2 in ml/min (* consumed_o2% * 10 for L in ml)
     vo2Max = vo2Total / settings.weightkg;                  // correction for wt
     if (vo2Max > vo2MaxMax)
         vo2MaxMax = vo2Max;
@@ -804,15 +721,18 @@ void vo2maxCalc()
     vo2CalDay = vo2Cal * 1440.0;                         // actual calories/min. * 1440 min. = cal./day
     if (vo2CalDay > vo2CalDayMax)
         vo2CalDayMax = vo2CalDay;
-    Serial.print("\nCalc volumeVEmean");
-    Serial.print(volumeVEmean);
-    Serial.print("\nCalc vo2Total from o2 ");
-    Serial.print(vo2Total);
-    Serial.print("\nCalc vo2TotalIn ");
-    Serial.print(vo2TotalIn);
-    Serial.print("\nCalc vo2TotalOut ");
-    Serial.println(vo2TotalOut);
 
+    Serial.print("{ \"vo2\": {");
+    Serial.print("\"vo2Total\": ");
+    Serial.print(vo2Total);
+    Serial.print(", \"consumed_o2\": ");
+    Serial.print(consumed_o2);
+    Serial.print(", \"vo2TotalIn\": ");
+    Serial.print(vo2TotalIn);
+    Serial.print(", \"vo2TotalOut\": ");
+    Serial.print(vo2TotalOut);
+    Serial.println("}}");
+ 
 }
 
 //--------------------------------------------------
