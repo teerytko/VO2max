@@ -595,7 +595,7 @@ float volumeCalc()
         if (ventilationState == EXPIRATION)
         {
             Serial.print("{ \"event\": \"EXPIRATION DONE\", \"time\": ");
-            Serial.print(ConvertTime(TotalTime));
+            Serial.print("\""+ConvertTime(TotalTime)+"\"");
             Serial.println("}");
 
             ventilationState = EXPIRATION_DONE;
