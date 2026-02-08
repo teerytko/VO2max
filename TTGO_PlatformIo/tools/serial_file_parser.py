@@ -22,10 +22,23 @@ except Exception:  # pragma: no cover - optional dependency
     serial = None
 
 
-def parse_line(line: str) -> Union[dict, str]:
+def is_debug_line(line: str) -> bool:
+    """Check if line is an ESP-IDF debug/log line.
+    Debug lines typically start with [timestamp][level][module] format.
+    Example: [  4650][D][BLEDevice.cpp:579] getAdvertising(): get advertising
+    """
+    s = line.strip()
+    return s.startswith('[') and '][' in s and ']:' in s
+
+
+def parse_line(line: str) -> Union[dict, str, None]:
+    """Parse a line, returning dict for JSON, string for non-JSON, None for debug lines."""
     s = line.strip()
     if not s:
-        return s
+        return None
+    # Skip ESP-IDF debug/log lines
+    if is_debug_line(s):
+        return None
     try:
         return json.loads(s)
     except Exception:
@@ -59,13 +72,17 @@ def read_from_serial(port: str, baud: int = 115200, encoding: str = "utf-8") -> 
             yield parse_line(line)
 
 
-def print_record(record: Union[dict, str], out_fh = None) -> None:
+def print_record(record: Union[dict, str, None], out_fh = None) -> None:
+    if record is None:
+        return
     if isinstance(record, dict):
         print(json.dumps(record, ensure_ascii=False))
-        out_fh.write(json.dumps(record, ensure_ascii=False) + "\n") if out_fh else None
+        if out_fh:
+            out_fh.write(json.dumps(record, ensure_ascii=False) + "\n")
     else:
         print(json.dumps({"raw": record}, ensure_ascii=False))
-        out_fh.write(json.dumps({"raw": record}, ensure_ascii=False) + "\n") if out_fh else None
+        if out_fh:
+            out_fh.write(json.dumps({"raw": record}, ensure_ascii=False) + "\n")
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Read lines from a file or serial port and parse them")
@@ -95,6 +112,9 @@ def main(argv: list[str] | None = None) -> int:
 
         count = 0
         for record in source:
+            # Skip None records (debug lines, empty lines)
+            if record is None:
+                continue
             count += 1
             print_record(record, out_fh=out_fh)
             if args.limit and count >= args.limit:

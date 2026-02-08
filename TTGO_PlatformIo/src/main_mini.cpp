@@ -67,6 +67,7 @@ int DEMO = 0; // 1 = DEMO-mode
 
 // Defines the size of the Venturi openings for the  calculations of AirFlow
 float area_1 = 0.000531; // = 26mm diameter
+//float area_1 = 0.000401; // = 22,6mm diameter
 #if (DIAMETER == 20)
 float area_2 = 0.000314; // = 20mm diameter
 #elif (DIAMETER == 19)
@@ -84,14 +85,10 @@ float massFlow = 0;
 float volFlow = 0;
 float volumeTotal = 0;      // variable for holding total volume of breath
 float pressure = 0.0;       // differential pressure of the venturi nozzle
-float pressThreshold = 0.2; // threshold for starting calculation of VE
+float pressThreshold = 0.1; // threshold for starting calculation of VE
 float volumeVE = 0.0;
 float volumeVEmean = 0.0;
 float volumeExp = 0.0;
-
-// ######## Edit correction factor based on flow measurment with calibration syringe ############
-
-// float correctionSensor = 1.0;   // correction factor
 
 // ##############################################################################################
 
@@ -100,11 +97,13 @@ struct
 {
     int version = 1;              // Make sure saved data is right version
     float correctionSensor = 1.0; // calculated from 3L calibration syringe
-    float weightkg = 75.0;        // Standard-body-weight
+    float weightkg = 80.0;        // Standard-body-weight
     bool co2_on = false;          // CO2 sensor active
     bool bmp_on = false;          // Pressure sensor sensor active
 } settings;
 
+float TimerInspiration = 0.0;
+float TimerExpiration = 0.0;
 float TimerVolCalc = 0.0;
 float Timer5s = 0.0;
 float Timer1min = 0.0;
@@ -118,21 +117,22 @@ float TimerVE = 0.0;
 float DurationVE = 0.0;
 float lastO2 = 0;
 float initialO2 = 0;
-float consumed_o2 = 0;
+float deltaO2_frac = 0;
 float calTotal = 0;
 float vo2Cal = 0;
 float vo2CalH = 0;        // calories per hour
 float vo2CalDay = 0.0;    // calories per day
 float vo2CalDayMax = 0.0; // highest value of calories per day
-float vo2Max = 0;         // value of vo2Max/min/kg, calculated every 30 seconds
+float vo2Rel = 0;         // value of vo2rel ml/min/kg, calculated every 30 seconds
 float vo2Total = 0.0;     // value of total vo2Max/min
 float vo2MaxMax = 0;      // Best value of vo2 max for whole time machine is on
 float respq = 0.0;      // respiratory quotient in mol VCO2 / mol VO2
 float co2ppm = 0.0;     // CO2 sensor in ppm
 float co2perc = 0.0;    // = CO2ppm /10000
 float initialCO2 = 0.0; // initial value of CO2 in ppm
+float calibCO2 = 0.0;   // The CO2 (ppm) value after the calibration process
 float vco2Total = 0.0;
-float vco2Max = 0.0;
+float vco2Rel = 0.0;
 float co2temp = 0.0; // temperature CO2 sensor
 float co2hum = 0.0;  // humidity CO2 sensor (not used in calculations)
 float freqVE = 0.0;     // ventilation frequency
@@ -153,7 +153,17 @@ enum ventilationStates
     EXPIRATION,
     EXPIRATION_DONE
 };
+
+enum deviceStates
+{
+    DEVICE_INITIALIZE,
+    DEVICE_READY,
+    DEVICE_CALIBRATE,
+    DEVICE_MEASURE
+};
+
 int ventilationState = WAITING_PRESSURE;
+int state = DEVICE_INITIALIZE;
 // Forward declarations
 uint16_t readVoltage();     // read battery voltage
 float readCO2();         // read CO2 sensor
@@ -308,7 +318,7 @@ void setup()
     tft.setTextColor(TFT_GREEN, TFT_BLACK);
 
     tft.drawCentreString("Ready...", 120, 55, 4);
-
+    state = DEVICE_READY;
     TimerVolCalc = millis(); // timer for the volume (VE) integral function
     Timer5s = millis();
     Timer1min = millis();
@@ -334,24 +344,15 @@ void loop()
         //showScreen(o2, co2, respq, vol);
         delay(100);
     }
-    if (//(millis() - TimerVO2calc) > 5000 && pressure < pressThreshold) 
-        ventilationState == EXPIRATION_DONE
-    )
-    { // calls vo2maxCalc() for calculation Vo2Max every 5 seconds.
+    // calls vo2maxCalc() for calculation Vo2Max after every expiration
+    if (ventilationState == EXPIRATION_DONE)
+    {
         ventilationState = INSPIRATION;
         TimerVO2diff = millis() - TimerVO2calc;
         TimerVO2calc = millis(); // resets the timer
-        float co2 = readCO2();
+        TimerInspiration = millis();
         float o2 = readO2();
-        Serial.print("{ \"vco2\": {");
-        Serial.print("\"vco2Total\": ");
-        Serial.print(vco2Total);
-        Serial.print(", \"vco2Max\": ");
-        Serial.print(vco2Max);
-        Serial.print(", \"respq\": ");
-        Serial.print(respq);
-        Serial.println("}}");
-
+        float co2 = readCO2();
         vo2maxCalc();
         /*if (TotalTime >= 10000)*/
         {
@@ -362,8 +363,8 @@ void loop()
         // Publish JSON telemetry via BLE (if a client connected)
         if (bleServer.isClientConnected())
         {
-            bleServer.pushVO2Data(vo2Max);
-            bleServer.pushVCO2Data(vco2Max);
+            bleServer.pushVO2Data(vo2Rel);
+            bleServer.pushVCO2Data(vco2Rel);
             bleServer.pushRQData(respq);
         }
     }
@@ -373,9 +374,6 @@ void loop()
         Timer1min = millis(); // reset timer
                               // BatteryBT(); //TEST für battery discharge log ++++++++++++++++++++++++++++++++++++++++++
     }
-
-    TimerVolCalc = millis(); // part of the integral function to keep calculation volume over time
-    // Resets amount of time between calcs
 }
 
 //----------------------------------------------------------------------------------------------------------
@@ -426,7 +424,7 @@ void CheckInitialCO2()
     readCO2();
     initialCO2 = co2ppm;
 
-    if (initialCO2 > 1000)
+    if (initialCO2 > 5000)
     {
         tft.fillScreen(TFT_RED);
         tft.setTextColor(TFT_WHITE, TFT_RED);
@@ -524,6 +522,7 @@ float readCO2()
             co2ppm = 30000; // TEST+++++++++++++++++++++++++++++++++++++++++++++
         if (initialCO2 == 0)
             initialCO2 = co2ppm;
+        // PPM is already a volume (mole) fraction for gases. To get the percentage, divide by 10000.
         co2perc = co2ppm / 10000;
         co2temp = result[1];
         co2hum = result[2];
@@ -533,8 +532,8 @@ float readCO2()
             co2percdiff = 0;
 
         // VCO2 calculation is based on changes in CO2 concentration (difference to baseline)
-        vco2Total = volumeVEmean * rhoBTPS / rhoSTPD * co2percdiff * 10; // = vco2 in ml/min (* co2% * 10 for L in ml)
-        vco2Max = vco2Total / settings.weightkg;                         // correction for wt
+        vco2Total = 1000 * volumeVEmean * rhoBTPS / rhoSTPD * co2percdiff; // = vco2 in ml/min (* co2% * 10 for L in ml)
+        vco2Rel = vco2Total / settings.weightkg;                         // correction for wt
         respq = (vco2Total * 44) / (vo2Total * 32);                      // respiratory quotient based on molarity
         // CO2: 44g/mol, O2: 32 g/mol
         if (isnan(respq))
@@ -543,9 +542,9 @@ float readCO2()
             respq = 0;
 
 #ifdef VERBOSE
-        Serial.print("Initial CO2: ");
+        Serial.print(" Initial CO2: ");
         Serial.print(initialCO2);
-        Serial.print("CO2: ");
+        Serial.print(" CO2: ");
         Serial.print(result[0]);
         Serial.print(" ppm ");
         // Serial.print("Temperature = ");
@@ -567,7 +566,6 @@ float volumeCalc()
     // Read pressure from Omron D6F PH0025AD1 (or D6F PH0025AD2)
     float pressureraw = presSensor.getPressure();
     pressure = pressure / 2 + pressureraw / 2;
-
 #if 0
     Serial.print("\nTeemuR: pressure: ");
     Serial.print(pressure);
@@ -594,20 +592,24 @@ float volumeCalc()
     {
         if (ventilationState == EXPIRATION)
         {
+            float expTime = millis() - TimerExpiration;
             Serial.print("{ \"event\": \"EXPIRATION DONE\", \"time\": ");
             Serial.print("\""+ConvertTime(TotalTime)+"\"");
+            Serial.print(", \"duration\": ");
+            Serial.print("\""+ConvertTime(expTime)+"\"");
             Serial.println("}");
-
             ventilationState = EXPIRATION_DONE;
         }
         // read volumeVE
         readVE = 0;
+        // DurationVE is the time of one breath (inspiration + expiration) in ms, calculated from the time between two expirations
         DurationVE = millis() - TimerVE;
         TimerVE = millis(); // start timerVE
+        // volumeExp is the expiratory volume of one breath, calculated from the integral of flow (volFlow) over expiration time (TimerExpiration)
         volumeExp = volumeTotal;
         volumeTotal = 0; // resets volume for next breath
-        volumeVE = volumeExp / DurationVE * 60;
-        volumeExp = volumeExp / 1000;
+        // volumeVE is the minute ventilation (VE) in L/min, calculated from the expiratory volume and duration of one breath (DurationVE)
+        volumeVE = volumeExp / (DurationVE / 1000) * 60;
         volumeVEmean = (volumeVEmean * 3 / 4) + (volumeVE / 4); // running mean of one minute volume (VE)
         if (volumeVEmean < 1)
             volumeVEmean = 0;
@@ -617,28 +619,23 @@ float volumeCalc()
         freqVEmean = (freqVEmean * 3 / 4) + (freqVE / 4);
         if (freqVEmean < 1)
             freqVEmean = 0;
-
-#if 1
-        Serial.print("{ \"volume\": {");
-        Serial.print("\"volumeExp\": ");
-        Serial.print(volumeExp);
-        Serial.print(", \"VE\": ");
-        Serial.print(volumeVE);
-        Serial.print(", \"VEmean\": ");
-        Serial.print(volumeVEmean);
-        Serial.print(", \"freqVE\": ");
-        Serial.print(freqVE, 1);
-        Serial.print(", \"freqVEmean\": ");
-        Serial.print(freqVEmean, 1);
-        Serial.println("}}");
-        
-#endif
     }
     //if (millis() - TimerVE > 5000)
     //    readVE = 1; // readVE at least every 5s
 
     if (pressure >= pressThreshold)
     { // ongoing integral of volumeTotal
+        if (ventilationState == INSPIRATION)
+        {
+            float inspTime = millis() - TimerInspiration;
+            Serial.print("{ \"event\": \"INSPIRATION\"");
+            Serial.print(", \"time\": ");
+            Serial.print("\""+ConvertTime(TotalTime)+"\"");
+            Serial.print(", \"duration\": ");
+            Serial.print("\""+ConvertTime(inspTime)+"\"");
+            Serial.println("}");
+            TimerExpiration = millis();
+        }
 #if 0
     Serial.print("\nTeemuR EXPIRATION: volumeTotal: ");
     Serial.print(volumeTotal);
@@ -646,23 +643,23 @@ float volumeCalc()
 #endif
         ventilationState = EXPIRATION;
 
-        if (volumeTotal > 50)
+        if (volumeTotal > 0.4)
             readVE = 1;
-//        Serial.print("TeemuR: rho = ");
-//        Serial.print(rho);
-//        Serial.println("\n");
-
-        massFlow = 1000 * sqrt((abs(pressure) * 2 * rho) / ((1 / (pow(area_2, 2))) - (1 / (pow(area_1, 2))))); // Bernoulli equation
-        volFlow = massFlow / rho;                                                                              // volumetric flow of air
-        volFlow = volFlow * settings.correctionSensor;                                                         // correction of sensor calculations
-        volumeTotal = volFlow * (millis() - TimerVolCalc) + volumeTotal;
-        volumeTotal2 = volFlow * (millis() - TimerVolCalc) + volumeTotal2;
+        // massflow kg/s = sqrt((2 * rho * Δp) / (1/A2² - 1/A1²)) (A2 < A1)
+        massFlow = sqrt((2 * rho * abs(pressure)) / ((1 / (pow(area_2, 2))) - (1 / (pow(area_1, 2))))); // Bernoulli equation
+        // volFlow = massFlow / rho; // volumetric flow of air dm3/s (liter/s)
+        volFlow = 1000 * massFlow * settings.correctionSensor / rho;                                           // volumetric flow of air and correction of sensor calculations
+        volumeTotal = volFlow * ((millis() - TimerVolCalc) / 1000) + volumeTotal;
+        volumeTotal2 = volFlow * ((millis() - TimerVolCalc) / 1000) + volumeTotal2;
     }
     else if ((volumeTotal2 - volumeTotalOld) > 200)
     { // calculate actual expiratory volume
-        expiratVol = (volumeTotal2 - volumeTotalOld) / 1000;
+        expiratVol = (volumeTotal2 - volumeTotalOld);
         volumeTotalOld = volumeTotal2;
     }
+    TimerVolCalc = millis(); // part of the integral function to keep calculation volume over time
+    // Resets amount of time between calcs
+
     return expiratVol;
 }
 
@@ -704,35 +701,57 @@ void vo2maxCalc()
     Serial.println(co2perc);
 #endif
 
-    consumed_o2 = initialO2 - lastO2; // calculated level of consumed O2 based on Oxygen level loss
-    if (consumed_o2 < 0)
-        consumed_o2 = 0; // correction for sensor drift
+    deltaO2_frac = (initialO2 - lastO2) / 100; // calculated level of consumed O2 based on Oxygen level loss
+    if (deltaO2_frac < 0)
+        deltaO2_frac = 0; // correction for sensor drift
 
-    float vo2TotalIn = volumeVEmean * rhoBTPS / rhoSTPD * initialO2 / 100; // = vo2 in ml/min (* consumed_o2% * 10 for L in ml)
-    float vo2TotalOut = volumeVEmean * rhoBTPS / rhoSTPD * lastO2 / 100; // = vo2 in ml/min (* consumed_o2% * 10 for L in ml)
-    vo2Total = volumeVEmean * rhoBTPS / rhoSTPD * consumed_o2 * 1; // = vo2 in ml/min (* consumed_o2% * 10 for L in ml)
-    vo2Max = vo2Total / settings.weightkg;                  // correction for wt
-    if (vo2Max > vo2MaxMax)
-        vo2MaxMax = vo2Max;
+    float vo2TotalIn = 1000 * volumeVEmean * rhoBTPS / rhoSTPD * initialO2 / 100; // = vo2 in ml/min
+    float vo2TotalOut = 1000 * volumeVEmean * rhoBTPS / rhoSTPD * lastO2 / 100; // = vo2 in ml/min
+    vo2Total = 1000 * volumeVEmean * deltaO2_frac * rhoBTPS / rhoSTPD; // = volume in ml/min * deltaO2_frac% * rhoBTPS / rhoSTPD
+    vo2Rel = vo2Total / settings.weightkg;                  // vo2Rel with correction for weight
+    if (vo2Rel > vo2MaxMax)
+        vo2MaxMax = vo2Rel;
 
-    vo2Cal = vo2Total / 1000 * 4.86;                     // vo2Max liters/min * 4.86 Kcal/liter = kcal/min
+    vo2Cal = vo2Total / 1000 * 4.86;                     // vo2Rel liters/min * 4.86 Kcal/liter = kcal/min
     calTotal = calTotal + vo2Cal * TimerVO2diff / 60000; // integral function of calories
     vo2CalH = vo2Cal * 60.0;                             // actual calories/min. * 60 min. = cal./hour
     vo2CalDay = vo2Cal * 1440.0;                         // actual calories/min. * 1440 min. = cal./day
     if (vo2CalDay > vo2CalDayMax)
         vo2CalDayMax = vo2CalDay;
 
+    // TODO move the different file
+    Serial.print("{ \"volume\": {");
+    Serial.print("\"volumeExp\": ");
+    Serial.print(volumeExp);
+    Serial.print(", \"VE\": ");
+    Serial.print(volumeVE);
+    Serial.print(", \"VEmean\": ");
+    Serial.print(volumeVEmean);
+    Serial.print(", \"freqVE\": ");
+    Serial.print(freqVE, 1);
+    Serial.print(", \"freqVEmean\": ");
+    Serial.print(freqVEmean, 1);
+    Serial.println("}}");
     Serial.print("{ \"vo2\": {");
     Serial.print("\"vo2Total\": ");
     Serial.print(vo2Total);
-    Serial.print(", \"consumed_o2\": ");
-    Serial.print(consumed_o2);
+    Serial.print(", \"vo2Rel\": ");
+    Serial.print(vo2Rel);
+    Serial.print(", \"deltaO2_frac\": ");
+    Serial.print(deltaO2_frac);
     Serial.print(", \"vo2TotalIn\": ");
     Serial.print(vo2TotalIn);
     Serial.print(", \"vo2TotalOut\": ");
     Serial.print(vo2TotalOut);
     Serial.println("}}");
- 
+    Serial.print("{ \"vco2\": {");
+    Serial.print("\"vco2Total\": ");
+    Serial.print(vco2Total);
+    Serial.print(", \"vco2Rel\": ");
+    Serial.print(vco2Rel);
+    Serial.print(", \"respq\": ");
+    Serial.print(respq);
+    Serial.println("}}"); 
 }
 
 //--------------------------------------------------
