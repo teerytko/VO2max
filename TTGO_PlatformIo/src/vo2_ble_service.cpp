@@ -1,4 +1,4 @@
-#include "vo2_ble_service.H"    
+#include "vo2_ble_service.h"
     
 void VO2BleServer::onConnect(BLEServer *pServer) {
     _BLEClientConnected = true; 
