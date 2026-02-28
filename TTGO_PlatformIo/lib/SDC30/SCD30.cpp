@@ -46,9 +46,7 @@ bool SCD30::initialize(void) {
     }
     log_e("SCD30 ver %d\n", ver);
     setMeasurementInterval(2); // 2 seconds between measurements
-    startPeriodicMeasurment(); // start periodic measuments
-
-    //setAutoSelfCalibration(true); // Enable auto-self-calibration
+    setAutoSelfCalibration(0);
 }
 
 
@@ -74,6 +72,11 @@ void SCD30::setAutoSelfCalibration(bool enable) {
     } else {
         writeCommandWithArguments(SCD30_AUTOMATIC_SELF_CALIBRATION, 0);    //Deactivate continuous ASC
     }
+}
+
+void SCD30::setForcedCalibrationValue(uint16_t value) {
+    uint16_t val = (uint16_t)(value);
+    writeCommandWithArguments(SCD30_SET_FORCED_RECALIBRATION_FACTOR, val);
 }
 
 void SCD30::setMeasurementInterval(uint16_t interval) {

@@ -106,7 +106,7 @@ void test_co2_sensor_read_data(void) {
     for (int i = 0; i < 5 && !scd30.isAvailable(); i++)
     {
         Serial.print("TeemuR: scd not available yet, wait...\n");
-        delay(100); // service delay
+        delay(1000); // service delay
         TEST_ASSERT_TRUE_MESSAGE(init, "Wait for CO2 sensor!");
     }
     

@@ -117,6 +117,7 @@ float TimerVE = 0.0;
 float DurationVE = 0.0;
 float lastO2 = 0;
 float initialO2 = 0;
+float deltaCO2_frac = 0;
 float deltaO2_frac = 0;
 float calTotal = 0;
 float vo2Cal = 0;
@@ -129,7 +130,7 @@ float vo2MaxMax = 0;      // Best value of vo2 max for whole time machine is on
 float respq = 0.0;      // respiratory quotient in mol VCO2 / mol VO2
 float co2ppm = 0.0;     // CO2 sensor in ppm
 float co2perc = 0.0;    // = CO2ppm /10000
-float initialCO2 = 0.0; // initial value of CO2 in ppm
+float initialCO2 = 0.0; // initial/ambient value of CO2 in ppm
 float calibCO2 = 0.0;   // The CO2 (ppm) value after the calibration process
 float vco2Total = 0.0;
 float vco2Rel = 0.0;
@@ -177,6 +178,7 @@ void ReadButtons();     // read buttons
 void tftScreen1(float o2, float co2, float respq, float vol);      // show screen 1 on TFT
 void tftParameters();   // show parameters on TFT
 void GetWeightkg();     // get weight from scale
+String ConvertTime(float ms);
 
 void loadSettings()
 {
@@ -294,16 +296,16 @@ void setup()
     // init CO2 sensor Sensirion SCD30 -------------
     // check if sensor is connected?
     scd30.initialize();
-    scd30.setAutoSelfCalibration(0);
+    scd30.setMeasurementInterval(2);
+    scd30.startPeriodicMeasurment();
+    delay(1000);
     while (!scd30.isAvailable())
     {
         tft.drawString("CO2init..", 120, 75, 4);
+        delay(1000);
     }
     tft.drawString("CO2 ok", 120, 75, 4);
-
-    CheckInitialO2();
-    // Disable CO2 for now
-    CheckInitialCO2();
+    scd30.setForcedCalibrationValue(400); // set initial calibration value for CO2 sensor, 400ppm is the typical ambient value
     // init flow/pressure sensor Omron D6F-PF0025AD1 (or D6F-PF0025AD2) ----------
     while (!presSensor.begin(MODEL_0025AMD2))
     {
@@ -327,6 +329,9 @@ void setup()
     TotalTime = 0;
     // BatteryBT(); // TEST for battery discharge log
     // ++++++++++++++++++++++++++++++++++++++++++++
+    CheckInitialO2();
+    // Disable CO2 for now
+    CheckInitialCO2();
 }
 
 //----------------------------------------------------------------------------------------------------------
@@ -421,9 +426,15 @@ void CheckInitialO2()
 
 void CheckInitialCO2()
 { // check initial CO2 value
-    readCO2();
-    initialCO2 = co2ppm;
-
+    delay(2000);
+    initialCO2 = readCO2();
+    if (initialCO2 == 0) {
+        initialCO2 = 500; // correction for sensor errors, lower limit of CO2 sensor
+        Serial.print("Guessing initial CO2 as readout is too low!");
+    }
+    Serial.print("CheckInitialCO2: ");
+    Serial.println(initialCO2);
+    
     if (initialCO2 > 5000)
     {
         tft.fillScreen(TFT_RED);
@@ -520,19 +531,19 @@ float readCO2()
 
         if (DEMO == 1)
             co2ppm = 30000; // TEST+++++++++++++++++++++++++++++++++++++++++++++
-        if (initialCO2 == 0)
+        if (initialCO2 == 0) {
             initialCO2 = co2ppm;
+        }
         // PPM is already a volume (mole) fraction for gases. To get the percentage, divide by 10000.
-        co2perc = co2ppm / 10000;
         co2temp = result[1];
         co2hum = result[2];
 
-        float co2percdiff = (co2ppm - initialCO2) / 10000; // calculates difference to initial CO2
-        if (co2percdiff < 0)
-            co2percdiff = 0;
+        deltaCO2_frac = (co2ppm - initialCO2) / 1000000; // calculates difference to initial CO2
+        if (deltaCO2_frac < 0)
+            deltaCO2_frac = 0;
 
         // VCO2 calculation is based on changes in CO2 concentration (difference to baseline)
-        vco2Total = 1000 * volumeVEmean * rhoBTPS / rhoSTPD * co2percdiff; // = vco2 in ml/min (* co2% * 10 for L in ml)
+        vco2Total = 1000 * volumeVEmean * rhoBTPS / rhoSTPD * deltaCO2_frac; // = vco2 in ml/min (* co2% for L in ml)
         vco2Rel = vco2Total / settings.weightkg;                         // correction for wt
         respq = (vco2Total * 44) / (vo2Total * 32);                      // respiratory quotient based on molarity
         // CO2: 44g/mol, O2: 32 g/mol
@@ -541,16 +552,16 @@ float readCO2()
         if (respq > 1.5)
             respq = 0;
 
-#ifdef VERBOSE
+#if 1
         Serial.print(" Initial CO2: ");
         Serial.print(initialCO2);
         Serial.print(" CO2: ");
         Serial.print(result[0]);
         Serial.print(" ppm ");
-        // Serial.print("Temperature = ");
+        Serial.print("Temp = ");
         Serial.print(result[1]);
-        Serial.print(" ℃");
-        // Serial.print("Humidity = ");
+        Serial.print(" C ");
+        Serial.print("Hum = ");
         Serial.print(result[2]);
         Serial.println(" %");
 #endif
@@ -749,6 +760,10 @@ void vo2maxCalc()
     Serial.print(vco2Total);
     Serial.print(", \"vco2Rel\": ");
     Serial.print(vco2Rel);
+    Serial.print(", \"deltaCO2_frac\": ");
+    Serial.print(deltaCO2_frac);
+    Serial.print(", \"initialCO2\": ");
+    Serial.print(initialCO2);
     Serial.print(", \"respq\": ");
     Serial.print(respq);
     Serial.println("}}"); 

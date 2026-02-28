@@ -69,6 +69,7 @@ class SCD30 {
     void softReset(void);
   
     void setAutoSelfCalibration(bool enable);
+    void setForcedCalibrationValue(uint16_t value);
     void setMeasurementInterval(uint16_t interval);
 
     void startPeriodicMeasurment(void);
